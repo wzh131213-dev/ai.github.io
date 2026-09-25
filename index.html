@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GamePrompt AI Studio - 游戏提示词扩写与灵感工坊</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                            accent: '#a855f7',
+                            cyan: '#06b6d4',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+        }
+        .glow-button {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            transition: all 0.3s ease;
+        }
+        .glow-button:hover {
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
+            transform: translateY(-1px);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Navigation Header -->
+    <header class="glass-panel sticky top-0 z-40 border-b border-slate-800 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                        GamePrompt <span class="gradient-text">AI Studio</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">AI 游戏提示词扩写与深度灵感生成器</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="history-toggle-btn" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition flex items-center gap-2 border border-slate-700">
+                    <i class="fa-solid fa-history"></i>
+                    <span>扩写历史</span>
+                </button>
+                <a href="#preset-section" class="px-3 py-2 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 text-sm font-medium transition flex items-center gap-2 border border-indigo-800/50">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>灵感预设</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Input Form & Parameters (5 columns) -->
+        <section class="lg:col-span-5 flex flex-col gap-5">
+            
+            <!-- Quick Preset Chips -->
+            <div id="preset-section" class="glass-panel rounded-2xl p-4">
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-400"></i> 一键填入灵感预设
+                </label>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="赛博朋克风格的2D像素风肉鸽动作游戏，主打高频招架与刀光剑影">
+                        ⚡ 赛博像素Roguelike
+                    </button>
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="太空探索与废土建造游戏，玩家需要在异星收集资源并建造移动堡垒">
+                        🚀 太空废土移动堡垒
+                    </button>
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="克苏鲁神话背景的英式维多利亚时期解谜卡牌游戏，涉及疯狂度与理智值机制">
+                        🐙 克苏鲁理智卡牌
+                    </button>
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="国风水墨修仙题材的开放世界动作RPG，结合御剑飞行与五行相生相克系统">
+                        🗡️ 国风水墨御剑RPG
+                    </button>
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="温馨治愈系猫咪经营模拟，三维LowPoly低多边形画风，包含料理合成">
+                        🐱 Cozy猫咪低多边形
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Input Form -->
+            <div class="glass-panel rounded-2xl p-5 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-nib text-indigo-400"></i> 输入核心游戏构想
+                    </h2>
+                    <span class="text-xs text-slate-400">支持中文/英文输入</span>
+                </div>
+
+                <div class="relative">
+                    <textarea id="user-prompt-input" rows="4" 
+                        class="w-full bg-slate-900/90 text-slate-100 rounded-xl p-3.5 border border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm resize-none transition placeholder-slate-500"
+                        placeholder="例如：一个带有重力反转机制的低多边形科幻解谜游戏，主角是一个可以操作时间回溯的机器人..."></textarea>
+                    <button id="clear-input-btn" class="absolute right-3 bottom-3 text-xs text-slate-500 hover:text-slate-300 transition">
+                        <i class="fa-solid fa-xmark"></i> 清空
+                    </button>
+                </div>
+
+                <!-- Prompt Customization Options Grid -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    
+                    <!-- Visual Style -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">🎨 视觉画风 (Art Style)</label>
+                        <select id="style-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                            <option value="Pixel Art (16-bit / 32-bit)">像素风 (Pixel Art)</option>
+                            <option value="Cyberpunk Neon High-Tech">赛博朋克霓虹 (Cyberpunk)</option>
+                            <option value="Unreal Engine 5 Photorealistic 3D">UE5写实三维 (Photorealistic)</option>
+                            <option value="Stylized Low Poly 3D">低多边形 (Stylized Low Poly)</option>
+                            <option value="Dark Fantasy Gothic Anime">哥特暗黑幻想 (Dark Fantasy)</option>
+                            <option value="Traditional Chinese Ink Wash Painting">国风水墨 (Chinese Ink)</option>
+                            <option value="Studio Ghibli Hand-Drawn Anime">吉卜力手绘风 (Studio Ghibli)</option>
+                            <option value="Vibrant Synthwave / Retrowave 80s">80年代复古波 (Synthwave)</option>
+                        </select>
+                    </div>
+
+                    <!-- Target Engine / Framework -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">💻 目标引擎/代码库</label>
+                        <select id="engine-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                            <option value="Three.js / WebGL HTML5">Three.js / HTML5 网页</option>
+                            <option value="Unity C# GameEngine">Unity (C#脚本)</option>
+                            <option value="Unreal Engine 5 C++ & Blueprints">Unreal 5 (C++ / 蓝图)</option>
+                            <option value="Godot Engine 4 (GDScript)">Godot 4 (GDScript)</option>
+                            <option value="Phaser 3 JavaScript/TypeScript">Phaser 3 (2D Web游戏)</option>
+                        </select>
+                    </div>
+
+                    <!-- Gameplay Camera Angle -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">🎥 视角与镜头</label>
+                        <select id="camera-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                            <option value="2D Side-Scrolling Platformer">2D 横版过关</option>
+                            <option value="Isometric 2.5D Top-Down View">等轴测 2.5D 俯视角</option>
+                            <option value="First-Person Immersive View">第一人称视角 (FPS)</option>
+                            <option value="Third-Person Over-the-shoulder 3D">第三人称越肩视角</option>
+                            <option value="Top-Down Shooter / Tactics">正俯视 2D / 战术视角</option>
+                        </select>
+                    </div>
+
+                    <!-- Expansion Focus -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">🎯 侧重扩写模式</label>
+                        <select id="mode-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:border-indigo-500">
+                            <option value="All-Round Game Design Document (Full GDD)">全能 GDD 综合扩写</option>
+                            <option value="AI Image Generation Focus (Midjourney/SD)">AI 美术提示词专项扩写</option>
+                            <option value="AI Coding Assistant Focus (Claude/ChatGPT)">AI 编程代码提示词专项</option>
+                            <option value="World-Building & Lore Narrative Focus">世界观与叙事设计专项</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Toggles & Generate Action -->
+                <div class="pt-2 border-t border-slate-800 flex flex-col gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                        <input type="checkbox" id="generate-image-toggle" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-700" checked>
+                        <span>同步使用 Gemini 3.1 Flash Image 生成概念图预览</span>
+                    </label>
+
+                    <button id="generate-btn" class="glow-button w-full py-3 px-4 rounded-xl font-bold text-white text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>开始扩写提示词 & 构想游戏</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- API Status & Information Box -->
+            <div class="glass-panel rounded-2xl p-4 text-xs text-slate-400 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>模型驱动: <strong class="text-slate-200">Gemini 3 Flash & 3.1 Flash Image</strong></span>
+                </div>
+                <span class="text-slate-500">免密钥免配置</span>
+            </div>
+
+        </section>
+
+        <!-- Right Column: Expanded Outputs & Concept Art (7 columns) -->
+        <section class="lg:col-span-7 flex flex-col gap-5">
+            
+            <!-- Output Header & Tab Nav -->
+            <div class="glass-panel rounded-2xl p-2 flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-1 overflow-x-auto p-1 max-w-full">
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold transition bg-indigo-600 text-white" data-tab="tab-overview">
+                        <i class="fa-solid fa-compass mr-1"></i> 综合策划大纲
+                    </button>
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-art">
+                        <i class="fa-solid fa-palette mr-1"></i> 美术Prompt (MJ/SD)
+                    </button>
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-code">
+                        <i class="fa-solid fa-code mr-1"></i> AI 编程Prompt
+                    </button>
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-lore">
+                        <i class="fa-solid fa-scroll mr-1"></i> 剧情与世界观
+                    </button>
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-preview">
+                        <i class="fa-solid fa-image mr-1"></i> 概念图预览
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 px-2">
+                    <button id="copy-all-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition flex items-center gap-1" title="复制所有文本">
+                        <i class="fa-solid fa-copy"></i> 一键全部复制
+                    </button>
+                    <button id="download-markdown-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition flex items-center gap-1" title="导出 Markdown">
+                        <i class="fa-solid fa-file-arrow-down"></i> 导出 MD
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Skeleton State -->
+            <div id="loading-state" class="hidden glass-panel rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4">
+                <div class="relative w-16 h-16">
+                    <div class="absolute inset-0 rounded-full border-4 border-indigo-500/20 animate-ping"></div>
+                    <div class="w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-100">AI 正在高能扩写游戏提示词...</h3>
+                    <p class="text-xs text-slate-400 mt-1">分析游戏核心机制、构建 Midjourney 美术 Prompt 与程序开发指令...</p>
+                </div>
+            </div>
+
+            <!-- Empty Placeholder State -->
+            <div id="empty-state" class="glass-panel rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3 border-dashed border-2 border-slate-800">
+                <div class="w-16 h-16 rounded-2xl bg-slate-800/80 flex items-center justify-center text-slate-500 text-2xl">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-300">还没有扩写内容</h3>
+                <p class="text-xs text-slate-500 max-w-sm">在左侧输入简单的游戏构想或点击预设灵感，点击“开始扩写提示词”按钮生成完整的游戏设计方案。</p>
+            </div>
+
+            <!-- Result Panels Container -->
+            <div id="result-container" class="hidden flex flex-col gap-4">
+                
+                <!-- Tab 1: Overview & GDD Brief -->
+                <div id="tab-overview" class="tab-content flex flex-col gap-4">
+                    <div class="glass-panel rounded-2xl p-5 border-l-4 border-l-indigo-500">
+                        <div class="flex items-center justify-between mb-2">
+                            <span id="res-game-title" class="text-xl font-black text-indigo-300 tracking-wide">游戏标题</span>
+                            <span id="res-genre-badge" class="px-2.5 py-1 rounded-full bg-indigo-900/50 text-indigo-300 text-xs font-semibold border border-indigo-700/50">类型</span>
+                        </div>
+                        <p id="res-tagline" class="text-sm italic text-slate-400 mb-3">电梯演讲与核心卖点说明</p>
+                        <div class="text-xs text-slate-300 leading-relaxed space-y-2 border-t border-slate-800/80 pt-3" id="res-summary">
+                            <!-- Summary text -->
+                        </div>
+                    </div>
+
+                    <!-- Core Mechanics Grid -->
+                    <div class="glass-panel rounded-2xl p-5">
+                        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-gears text-indigo-400"></i> 核心游戏循环与特色玩法
+                        </h3>
+                        <div id="res-mechanics-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <!-- Mechanic cards will render here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: AI Art Prompts (MJ/SD/DALL-E) -->
+                <div id="tab-art" class="tab-content hidden flex flex-col gap-4">
+                    
+                    <!-- Environment / Level Design Prompt -->
+                    <div class="glass-panel rounded-2xl p-5 relative">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-mountain-sun text-emerald-400"></i> 场景环境设计 Prompt (Environment)
+                            </h4>
+                            <button class="copy-card-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition" data-target="art-env-prompt">
+                                <i class="fa-solid fa-copy"></i> 复制
+                            </button>
+                        </div>
+                        <div id="art-env-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-emerald-300 border border-slate-800/80 leading-relaxed selection:bg-emerald-900 select-all">
+                            <!-- Environment prompt content -->
+                        </div>
+                    </div>
+
+                    <!-- Main Character / Sprite Prompt -->
+                    <div class="glass-panel rounded-2xl p-5 relative">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-ninja text-purple-400"></i> 主角/精灵/模型 Prompt (Character)
+                            </h4>
+                            <button class="copy-card-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition" data-target="art-char-prompt">
+                                <i class="fa-solid fa-copy"></i> 复制
+                            </button>
+                        </div>
+                        <div id="art-char-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-purple-300 border border-slate-800/80 leading-relaxed selection:bg-purple-900 select-all">
+                            <!-- Character prompt content -->
+                        </div>
+                    </div>
+
+                    <!-- UI / HUD Asset Prompt -->
+                    <div class="glass-panel rounded-2xl p-5 relative">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-window-maximize text-cyan-400"></i> UI & 界面 UI Layout Prompt
+                            </h4>
+                            <button class="copy-card-btn px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition" data-target="art-ui-prompt">
+                                <i class="fa-solid fa-copy"></i> 复制
+                            </button>
+                        </div>
+                        <div id="art-ui-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-cyan-300 border border-slate-800/80 leading-relaxed selection:bg-cyan-900 select-all">
+                            <!-- UI prompt content -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Tab 3: Code Generation Prompt for Claude/ChatGPT -->
+                <div id="tab-code" class="tab-content hidden flex flex-col gap-4">
+                    <div class="glass-panel rounded-2xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                    <i class="fa-solid fa-terminal text-amber-400"></i> AI 编程指令 (用于 Claude / ChatGPT / Cursor)
+                                </h3>
+                                <p class="text-xs text-slate-400">将此 Prompt 粘贴至 AI 编程助手，直接生成游戏 Prototype 原型代码</p>
+                            </div>
+                            <button class="copy-card-btn px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition flex items-center gap-1" data-target="res-code-prompt">
+                                <i class="fa-solid fa-copy"></i> 复制完整代码 Prompt
+                            </button>
+                        </div>
+                        <pre id="res-code-prompt" class="bg-slate-950 p-4 rounded-xl font-mono text-xs text-amber-200/90 border border-slate-800 whitespace-pre-wrap overflow-x-auto max-h-[500px] leading-relaxed selection:bg-amber-900"></pre>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Lore & Narrative Brief -->
+                <div id="tab-lore" class="tab-content hidden flex flex-col gap-4">
+                    <div class="glass-panel rounded-2xl p-5">
+                        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-book-open text-purple-400"></i> 世界观背景与叙事框架
+                        </h3>
+                        <div id="res-lore-body" class="text-xs text-slate-300 leading-relaxed space-y-3">
+                            <!-- Lore text rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 5: Image Concept Preview (Gemini 3.1 Flash Image) -->
+                <div id="tab-preview" class="tab-content hidden flex flex-col gap-4">
+                    <div class="glass-panel rounded-2xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic text-pink-400"></i> Gemini 3.1 Flash Image 概念生成
+                                </h3>
+                                <p class="text-xs text-slate-400">根据扩写的美术 Prompt 实时生成的视觉概念预览图</p>
+                            </div>
+                            <button id="re-generate-image-btn" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition flex items-center gap-1">
+                                <i class="fa-solid fa-arrows-rotate"></i> 重新生成画面
+                            </button>
+                        </div>
+
+                        <div id="concept-image-container" class="min-h-[300px] bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center p-4 relative overflow-hidden">
+                            <div id="image-loading" class="hidden flex flex-col items-center gap-3">
+                                <i class="fa-solid fa-spinner animate-spin text-3xl text-indigo-400"></i>
+                                <span class="text-xs text-slate-400">正在生成游戏概念图...</span>
+                            </div>
+                            <img id="concept-image-result" src="" alt="Game Concept Art" class="hidden max-h-[500px] w-auto rounded-lg object-contain shadow-2xl">
+                            <div id="image-error" class="hidden text-xs text-rose-400 text-center p-4">
+                                <i class="fa-solid fa-circle-exclamation text-xl mb-1"></i>
+                                <p>概念图生成失败或被跳过</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Drawer: History Modal -->
+    <div id="history-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity">
+        <div class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-slate-900 border-l border-slate-800 p-6 flex flex-col gap-4 overflow-y-auto shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> 历史扩写记录
+                </h3>
+                <button id="close-history-btn" class="text-slate-400 hover:text-slate-100 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="history-list" class="flex flex-col gap-3">
+                <p class="text-xs text-slate-500 text-center py-8">暂无历史扩写记录</p>
+            </div>
+
+            <button id="clear-history-btn" class="mt-auto py-2 text-xs text-rose-400 hover:text-rose-300 border border-rose-900/40 rounded-lg hover:bg-rose-950/30 transition">
+                清空所有历史
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let currentGeneratedData = null;
+        let expansionHistory = JSON.parse(localStorage.getItem('game_prompt_history') || '[]');
+
+        // DOM Elements
+        const userPromptInput = document.getElementById('user-prompt-input');
+        const styleSelect = document.getElementById('style-select');
+        const engineSelect = document.getElementById('engine-select');
+        const cameraSelect = document.getElementById('camera-select');
+        const modeSelect = document.getElementById('mode-select');
+        const generateImgToggle = document.getElementById('generate-image-toggle');
+        const generateBtn = document.getElementById('generate-btn');
+        
+        const loadingState = document.getElementById('loading-state');
+        const emptyState = document.getElementById('empty-state');
+        const resultContainer = document.getElementById('result-container');
+
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-indigo-600';
+            const icon = type === 'success' ? 'fa-check' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+            
+            toast.className = `${bgColor} text-white text-xs px-4 py-3 rounded-xl shadow-xl flex items-center gap-2 pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function copyToClipboard(text, successMsg = "已复制到剪贴板！") {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast(successMsg, 'success');
+                } else {
+                    showToast("复制失败，请手动选择", 'error');
+                }
+            } catch (err) {
+                showToast("复制异常: " + err, 'error');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.getAttribute('data-tab');
+                
+                tabBtns.forEach(b => {
+                    b.classList.remove('bg-indigo-600', 'text-white');
+                    b.classList.add('text-slate-400');
+                });
+                
+                btn.classList.add('bg-indigo-600', 'text-white');
+                btn.classList.remove('text-slate-400');
+
+                tabContents.forEach(content => {
+                    if (content.id === targetTab) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        // Preset button quick fill
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                userPromptInput.value = btn.getAttribute('data-prompt');
+                showToast("已填入预设灵感！", "info");
+            });
+        });
+
+        // Clear input
+        document.getElementById('clear-input-btn').addEventListener('click', () => {
+            userPromptInput.value = '';
+        });
+
+        async function generateGamePrompts() {
+            const userInput = userPromptInput.value.trim();
+            if (!userInput) {
+                showToast("请输入游戏构想或点击选择上方预设！", "error");
+                return;
+            }
+
+            // UI Loading state
+            emptyState.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            generateBtn.disabled = true;
+            generateBtn.classList.add('opacity-75');
+
+            const artStyle = styleSelect.value;
+            const engine = engineSelect.value;
+            const camera = cameraSelect.value;
+            const mode = modeSelect.value;
+
+            // System instructions for structured output
+            const systemPrompt = `You are a world-class Game Designer, Game Architect, and Prompt Engineer.
+Your task is to expand a raw game idea into a rich, structured set of prompts and GDD specifications.
+
+User Input Idea: "${userInput}"
+Target Art Style: "${artStyle}"
+Target Game Engine: "${engine}"
+Camera Perspective: "${camera}"
+Expansion Mode Focus: "${mode}"
+
+Respond ONLY with a valid JSON object strictly adhering to this schema:
+{
+  "gameTitle": "Catchy Game Title (Bilingual Chinese & English)",
+  "genre": "Genre classification (e.g., 2D Action Roguelike)",
+  "tagline": "A compelling 1-sentence elevator pitch",
+  "summary": "Detailed summary of core fantasy, theme, and gameplay loop in Chinese",
+  "gameplayMechanics": [
+    {
+      "name": "Mechanic Name",
+      "description": "Detailed description of how this mechanism works in-game"
+    },
+    {
+      "name": "Mechanic Name",
+      "description": "Detailed description"
+    },
+    {
+      "name": "Mechanic Name",
+      "description": "Detailed description"
+    }
+  ],
+  "artPrompts": {
+    "environmentPrompt": "Comprehensive Midjourney/Stable Diffusion prompt for environment background with quality tags, camera parameters, and style modifiers in English.",
+    "characterPrompt": "Detailed Midjourney/SD prompt for character sprite sheet / model sheet / concept art in English.",
+    "uiPrompt": "Detailed Midjourney/SD prompt for game UI design, HUD elements, button design in English."
+  },
+  "codePrompt": "A comprehensive prompt tailored for Claude 3.5 Sonnet / ChatGPT to write complete, working game prototype code using ${engine}. Include detailed setup, control handling, player state, main loop, and render instructions.",
+  "narrativeBrief": "Engaging narrative framework, world-building lore, protagonist background, and atmospheric vibe in Chinese."
+}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: "Synthesize and expand the game prompt according to system instructions." }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            };
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!jsonText) {
+                    throw new Error("未收到有效模型生成结果");
+                }
+
+                currentGeneratedData = JSON.parse(jsonText);
+                
+                // Render text outputs
+                renderResults(currentGeneratedData);
+
+                // Save to history
+                saveToHistory(currentGeneratedData, userInput);
+
+                // Check if concept image generation is requested
+                if (generateImgToggle.checked) {
+                    generateConceptImage(currentGeneratedData.artPrompts.environmentPrompt);
+                }
+
+            } catch (error) {
+                console.error("Expansion Error:", error);
+                showToast("扩写生成失败: " + error.message, "error");
+            } finally {
+                loadingState.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('opacity-75');
+            }
+        }
+
+        function renderResults(data) {
+            // Overview Tab
+            document.getElementById('res-game-title').textContent = data.gameTitle || '未命名游戏';
+            document.getElementById('res-genre-badge').textContent = data.genre || '核心游戏';
+            document.getElementById('res-tagline').textContent = `“${data.tagline}”`;
+            document.getElementById('res-summary').innerHTML = `<p>${data.summary}</p>`;
+
+            // Mechanics rendering
+            const mechanicsList = document.getElementById('res-mechanics-list');
+            mechanicsList.innerHTML = '';
+            if (Array.isArray(data.gameplayMechanics)) {
+                data.gameplayMechanics.forEach(m => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 flex flex-col gap-1';
+                    card.innerHTML = `
+                        <span class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-gamepad text-indigo-500"></i> ${m.name}
+                        </span>
+                        <p class="text-xs text-slate-300 leading-relaxed">${m.description}</p>
+                    `;
+                    mechanicsList.appendChild(card);
+                });
+            }
+
+            // Art Tab
+            document.getElementById('art-env-prompt').textContent = data.artPrompts?.environmentPrompt || '';
+            document.getElementById('art-char-prompt').textContent = data.artPrompts?.characterPrompt || '';
+            document.getElementById('art-ui-prompt').textContent = data.artPrompts?.uiPrompt || '';
+
+            // Code Tab
+            document.getElementById('res-code-prompt').textContent = data.codePrompt || '';
+
+            // Lore Tab
+            document.getElementById('res-lore-body').innerHTML = `<p>${data.narrativeBrief || '无故事摘要'}</p>`;
+        }
+
+        async function generateConceptImage(artPromptText) {
+            const imgContainer = document.getElementById('concept-image-container');
+            const imgLoading = document.getElementById('image-loading');
+            const imgResult = document.getElementById('concept-image-result');
+            const imgError = document.getElementById('image-error');
+
+            imgLoading.classList.remove('hidden');
+            imgResult.classList.add('hidden');
+            imgError.classList.add('hidden');
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: `Create a high quality visual concept art for a video game: ${artPromptText}` }]
+                }],
+                generationConfig: {
+                    responseModalities: ['IMAGE'],
+                    imageConfig: { aspectRatio: "16:9" }
+                }
+            };
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+
+                if (part && part.inlineData) {
+                    const imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                    imgResult.src = imageUrl;
+                    imgResult.classList.remove('hidden');
+                    showToast("概念视觉效果图已生成！", "success");
+                } else {
+                    throw new Error("未获得图像数据");
+                }
+            } catch (err) {
+                console.error("Image Generation Failed:", err);
+                imgError.classList.remove('hidden');
+                imgError.querySelector('p').textContent = "概念图生成异常: " + err.message;
+            } finally {
+                imgLoading.classList.add('hidden');
+            }
+        }
+
+        async function fetchWithBackoff(url, options, maxRetries = 3) {
+            let delay = 1000;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res.ok) return res;
+                    if (res.status === 429) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                        continue;
+                    }
+                    throw new Error(`HTTP Error ${res.status}`);
+                } catch (err) {
+                    if (i === maxRetries - 1) throw err;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        function saveToHistory(data, inputPrompt) {
+            const item = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString('zh-CN'),
+                input: inputPrompt,
+                data: data
+            };
+            expansionHistory.unshift(item);
+            if (expansionHistory.length > 15) expansionHistory.pop(); // Keep last 15
+            localStorage.setItem('game_prompt_history', JSON.stringify(expansionHistory));
+            renderHistoryList();
+        }
+
+        function renderHistoryList() {
+            const historyList = document.getElementById('history-list');
+            if (expansionHistory.length === 0) {
+                historyList.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">暂无历史扩写记录</p>`;
+                return;
+            }
+
+            historyList.innerHTML = '';
+            expansionHistory.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'glass-panel glass-panel-hover rounded-xl p-3 cursor-pointer transition flex flex-col gap-1 border border-slate-800';
+                el.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-300 truncate max-w-[200px]">${item.data.gameTitle || '未命名'}</span>
+                        <span class="text-[10px] text-slate-500">${item.timestamp}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 line-clamp-1">"${item.input}"</p>
+                `;
+                el.addEventListener('click', () => {
+                    currentGeneratedData = item.data;
+                    renderResults(item.data);
+                    emptyState.classList.add('hidden');
+                    resultContainer.classList.remove('hidden');
+                    document.getElementById('history-modal').classList.add('hidden');
+                    showToast("已载入历史记录！", "info");
+                });
+                historyList.appendChild(el);
+            });
+        }
+
+        // Event listener for generate button
+        generateBtn.addEventListener('click', generateGamePrompts);
+
+        // Re-generate image listener
+        document.getElementById('re-generate-image-btn').addEventListener('click', () => {
+            if (currentGeneratedData && currentGeneratedData.artPrompts?.environmentPrompt) {
+                generateConceptImage(currentGeneratedData.artPrompts.environmentPrompt);
+            } else {
+                showToast("请先执行游戏提示词扩写！", "error");
+            }
+        });
+
+        // Copy Card Button Handler
+        document.querySelectorAll('.copy-card-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const targetId = btn.getAttribute('data-target');
+                const text = document.getElementById(targetId)?.textContent;
+                if (text) {
+                    copyToClipboard(text, "已复制 Prompt！");
+                }
+            });
+        });
+
+        // Copy All Handler
+        document.getElementById('copy-all-btn').addEventListener('click', () => {
+            if (!currentGeneratedData) {
+                showToast("暂无可复制的扩写内容", "error");
+                return;
+            }
+            const fullContent = `
+# ${currentGeneratedData.gameTitle}
+*${currentGeneratedData.tagline}*
+
+## 游戏类型与平台
+${currentGeneratedData.genre}
+
+## 核心设计概述
+${currentGeneratedData.summary}
+
+## 核心玩法机制
+${currentGeneratedData.gameplayMechanics?.map(m => `- **${m.name}**: ${m.description}`).join('\n')}
+
+## 美术提示词 (Art Prompts)
+- **场景环境 Prompt**: ${currentGeneratedData.artPrompts?.environmentPrompt}
+- **角色/精灵 Prompt**: ${currentGeneratedData.artPrompts?.characterPrompt}
+- **界面 UI Prompt**: ${currentGeneratedData.artPrompts?.uiPrompt}
+
+## AI 编程 Prompt
+\`\`\`
+${currentGeneratedData.codePrompt}
+\`\`\`
+
+## 世界观与剧情
+${currentGeneratedData.narrativeBrief}
+            `.trim();
+
+            copyToClipboard(fullContent, "已复制完整 GDD 及所有 Prompt！");
+        });
+
+        // Export Markdown Handler
+        document.getElementById('download-markdown-btn').addEventListener('click', () => {
+            if (!currentGeneratedData) {
+                showToast("暂无可导出的扩写内容", "error");
+                return;
+            }
+            const mdContent = `# ${currentGeneratedData.gameTitle}\n\n` +
+                `> ${currentGeneratedData.tagline}\n\n` +
+                `## 游戏概述\n${currentGeneratedData.summary}\n\n` +
+                `## 场景美术 Prompt\n\`\`\`\n${currentGeneratedData.artPrompts?.environmentPrompt}\n\`\`\`\n\n` +
+                `## 角色美术 Prompt\n\`\`\`\n${currentGeneratedData.artPrompts?.characterPrompt}\n\`\`\`\n\n` +
+                `## 代码 Prompt\n\`\`\`\n${currentGeneratedData.codePrompt}\n\`\`\`\n`;
+
+            const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${currentGeneratedData.gameTitle || 'Game_Prompt'}.md`;
+            link.click();
+            showToast("已开始下载 Markdown 文档", "success");
+        });
+
+        // History Modal Toggles
+        const historyModal = document.getElementById('history-modal');
+        document.getElementById('history-toggle-btn').addEventListener('click', () => {
+            renderHistoryList();
+            historyModal.classList.remove('hidden');
+        });
+        document.getElementById('close-history-btn').addEventListener('click', () => {
+            historyModal.classList.add('hidden');
+        });
+        document.getElementById('clear-history-btn').addEventListener('click', () => {
+            expansionHistory = [];
+            localStorage.removeItem('game_prompt_history');
+            renderHistoryList();
+            showToast("历史记录已清空", "info");
+        });
+
+        // Initialize history list on start
+        renderHistoryList();
+    </script>
+</body>
+</html>
