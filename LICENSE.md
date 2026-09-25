@@ -1,4 +1,4 @@
-Copyright (c) 2026 [您的姓名或 GitHub 用户名]
+Copyright (c) 2026 wzh131213-dev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
