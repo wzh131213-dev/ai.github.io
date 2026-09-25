@@ -55,3 +55,107 @@ Google 为开发者提供了非常慷慨的**免费 API 配额**（每分钟 15 
 ```
 编写一个用于 2D 横版平台跳跃游戏的完整 Three.js 样板代码。要求：1. 使用 OrthographicCamera（正交相机）实现 2D 视角。 2. 实现一个 'Player' 类，使用 THREE.Sprite 或带有平面几何体（plane geometry）的 THREE.Mesh 来呈现像素画纹理。 3. 包含基于重力的物理引擎，支持跳跃及针对平台物体的碰撞检测。 4. 创建一个 'GameStates' 对象，用于处理“探索”（横版卷轴模式）与“烹饪”（基于 UI 的合成模式）两种模式之间的切换。 5. 使用 requestAnimationFrame 设置动画循环，并结合 delta time（时间增量）以实现平滑移动。 6. 处理 WASD/A
 ```
+
+# 🔑 Guide to Applying for and Using a Free Google Gemini API Key
+
+Google offers developers a very generous **free API quota** (15 requests per minute, thousands of free calls per day — more than enough for personal development and everyday use).
+
+### 📌 Application Steps
+
+1. **Visit Google AI Studio**
+   Open the official website: https://aistudio.google.com/
+
+2. **Sign in with your Google account**
+   Log in using your Gmail or Google account.
+
+3. **Create an API Key**
+   * After entering the console, click the **"Get API key"** button in the left-hand menu or at the top.
+   * Click **"Create API key"** (create it in a new project or select an existing Google Cloud project).
+
+4. **Copy the API key**
+   * The system generates a key string starting with `AIzaSy...`.
+   * Click **Copy** to copy the key (please keep it safe and do not share it publicly).
+
+5. **Enter it in the tool**
+   * Return to our **GamePrompt AI Studio** page.
+   * Click the **"Settings / API Configuration"** button in the top-right corner.
+   * Select **🌐 Online API Generation** mode, paste the key you just copied into the input box, and click **Save & Apply** — that's it!
+
+### 💡 Notes & Tips
+
+* **Network requirements**: Due to Google service restrictions, you need to be on a network node that supports Google AI services when accessing AI Studio and calling the API (nodes in the US, Japan, Singapore, etc. are recommended).
+
+* **Completely free**: As long as you don't voluntarily link a credit card to enable a Paid Plan, Gemini's default Free Tier will not incur any charges.
+
+* **Privacy & security**: In this tool, the API key is stored only in your browser's `localStorage`, and all API requests communicate directly with Google's official servers — they do not pass through any third-party intermediate server.
+
+---
+
+# 🐱 Meow Star Canteen: Healing Journey
+*In a forest where stars fall, run a late-night cat canteen for weary souls.*
+
+> Note: The original document repeats the same game design content many times. The unique content is translated below once; the repeated blocks were identical copies.
+
+## Game Type & Platform
+2D Side-Scrolling Management Platformer
+
+## Core Design Overview
+The player takes on the role of a cat with alchemical cooking skills, adventuring through a dreamlike 2D side-view forest. By jumping across platforms, the player collects starlight ingredients scattered everywhere, then synthesizes them in the management mode into deeply healing cat cuisine. The game combines the flexibility of action exploration with the sense of accomplishment of simulation management, using a 16/32-bit retro pixel art style to provide players with a peaceful, cozy haven.
+
+## Core Gameplay Mechanics
+- **Side-Scrolling Exploration**: The player controls the kitten to jump and climb through multi-layered forest levels, searching for hidden rare ingredients such as Golden Catgrass and Moonlight Berries. Level design emphasizes rhythm rather than difficulty, and includes dynamic weather that affects ingredient growth.
+- **Alchemical Cooking Synthesis**: In the canteen kitchen, the player combines gathered raw materials through a grid-based synthesis system. Different recipes produce dishes with special buffs — for example, "Shining Pudding" increases movement speed, while "Tranquil Soup" attracts rare customers.
+- **Dynamic Canteen Management**: As dish levels increase, the canteen attracts more stray cat NPCs. The player must serve the right dishes to unlock each NPC's personal story, and earn "Cat Coins" to decorate the canteen or upgrade kitchenware.
+
+## Art Prompts
+- **Environment Prompt**: Pixel art game background, 32-bit aesthetic, cozy forest at night, giant glowing mushrooms, floating stars, warm interior of a wooden cabin kitchen, side-scrolling layout, soft ambient lighting, pastel colors, high resolution pixel details, Ghibli-inspired atmosphere.
+- **Character/Sprite Prompt**: Character sprite sheet for a cute ginger tabby cat, 16-bit pixel art style, multiple frames of walking, jumping, sitting, and cooking animation, wearing a tiny chef hat and apron, expressive face, clear silhouettes, vibrant color palette.
+- **UI Prompt**: Game UI design, 16-bit pixel art, inventory slots with wooden texture, cat paw icons for buttons, health bar shaped like a fish, vintage font, warm yellow and brown tones, translucent menu overlays.
+
+## AI Programming Prompt
+```
+Write a complete Three.js boilerplate for a 2D side-scrolling platformer. Requirements: 1. Use OrthographicCamera for a 2D perspective. 2. Implement a 'Player' class using THREE.Sprite or THREE.Mesh with a plane geometry for pixel art textures. 3. Include a gravity-based physics engine with jumping and collision detection for platform objects. 4. Create a 'GameStates' object to handle switching between 'Exploration' (side-scroller) and 'Cooking' (UI-based synthesis) modes. 5. Set up an animation loop using requestAnimationFrame with delta time for smooth movement. 6. Handle WASD/Arrow keys for movement and 'E' for interaction. 7. Use THREE.TextureLoader to enable pixel-perfect rendering (minFilter/magFilter set to THREE.NearestFilter).
+```
+
+## Worldview & Story
+In the distant "Floating Light Forest," legend says that whenever a shooting star streaks by, it carries away the weariness of a soul. The protagonist "Nuomi" (Sticky Rice) is a cat who has mastered the ancient culinary arts, and has built a late-night canteen deep in the forest. The guests here are not only animals, but also phantoms briefly escaping from the busy world. By running the canteen, the player is not just making dishes — they are weaving a story about companionship and belonging. Every late night, with flickering lamplight and steaming hot soup, is the most healing moment.
+
+---
+
+# 《极界回响: # 喵语星空食堂：治...》(Echoes of the Extreme Realm)
+*In a world of endless variables, rewrite destiny with unique system mechanics!*
+
+## Game Type & Platform
+Pixel-based 2D gameplay
+
+## Core Design Overview
+The player is placed in a fictional world built around the "Meow Star Canteen: Healing Journey" concept described above. The game uses the distinctive visual art style of Pixel Art (16-bit / 32-bit), and relies on the powerful real-time physics and rendering features of the Three.js / WebGL HTML5 engine, blending high-frequency strategic confrontation with a deep exploration-and-growth loop.
+
+## Core Gameplay Mechanics
+- **Core Control & Energy Loop**: The player can affect the environment through basic movement and signature skills (such as time dilation / gravity switching / elemental countering). Each successful trigger of a mechanic accumulates energy value, which is used to unleash high-tier bursts.
+- **Procedural Random Exploration Levels**: Based on modular terrain combinations of the 2D Side-Scrolling Platformer, levels offer highly free branching route choices, combining high-risk, high-reward hidden areas with elite challenges.
+- **Modular Builds & Enhancement Trees**: Between combat and exploration, the player can freely assemble core components to customize their own combat style and skill attributes.
+
+## Art Prompts
+- **Environment Prompt**: Masterpiece concept art of game environment for "Meow Star Canteen: Healing Journey," stylized Pixel Art (16-bit / 32-bit), 2D Side-Scrolling Platformer, ambient lighting, Unreal Engine 5 render, cinematic lighting, volumetric fog, Octane render, highly detailed, 8k resolution --ar 16:9 --v 6.0
+- **Character/Sprite Prompt**: Character sheet concept art, protagonist inspired by "Meow Star Canteen: Healing Journey," full body sprite design, Pixel Art (16-bit / 32-bit), multiple poses, expressive features, game-ready character design, clean background, high contrast --ar 16:9
+- **UI Prompt**: Futuristic stylized Game UI HUD layout design, matching Pixel Art (16-bit / 32-bit), including health bar, skill cooldown icons, mini-map, inventory window, sleek modern vector graphics, game interface template --ar 16:9
+
+## AI Programming Prompt
+```
+// AI Code Prompt for Three.js / WebGL HTML5
+// Objective: Create a working prototype based on "Meow Star Canteen: Healing Journey"
+
+// Key Requirements:
+1. Setup primary viewport using 2D Side-Scrolling Platformer camera parameters.
+2. Implement player controller for standard movement + core mechanic.
+3. Create an interactive game object loop with collision handling.
+4. Build a basic HUD displaying core metrics (Health/Energy/Score).
+5. Render with stylized shaders matching Pixel Art (16-bit / 32-bit).
+
+// Starter Boilerplate Instructions for Claude/ChatGPT:
+"Please write a single runnable source code file using Three.js / WebGL HTML5 that sets up a 3D/2D scene with 2D Side-Scrolling Platformer, handles keyboard controls (WASD + Space), and demonstrates the mechanic: Meow Star Canteen: Healing Journey."
+```
+
+## Worldview & Story
+In the forgotten ruins of an old era, "Meow Star Canteen: Healing Journey" became the only key to breaking the deadlock. The player, as a Dawn Guardian, must not only survive the perilous wastelands, but also reconstruct the laws of civilization byunraveling the mysteries buried deep within ancient ruins. The story blends a deep sense of destiny with a blazing journey of comeback.
