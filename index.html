@@ -100,21 +100,21 @@
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- Navigation Header -->
-    <header class="glass-panel sticky top-0 z-40 border-b border-slate-800 px-6 py-4">
+    <header class="glass-panel sticky top-0 z-50 border-b border-slate-800/80 px-6 py-4 bg-slate-950/90 backdrop-blur-md shadow-lg">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/20">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/20 shrink-0">
                     <i class="fa-solid fa-gamepad"></i>
                 </div>
-                <div>
-                    <h1 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                <div class="min-w-0">
+                    <h1 class="text-xl font-extrabold tracking-tight flex items-center gap-2 truncate">
                         GamePrompt <span class="gradient-text">AI Studio</span>
                     </h1>
-                    <p class="text-xs text-slate-400">AI 游戏提示词扩写与 <b>一键可运行代码生成器</b></p>
+                    <p class="text-xs text-slate-400 truncate">AI 游戏提示词扩写与 <b>一键可运行代码生成器</b></p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <button id="settings-btn" class="px-3 py-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-2 border border-slate-700 shadow-sm" title="API 设置与模式选择">
                     <i class="fa-solid fa-gear text-indigo-400"></i>
                     <span id="current-mode-label" class="hidden sm:inline">设置 / API 配置</span>
@@ -258,29 +258,29 @@
         <section class="lg:col-span-7 flex flex-col gap-5">
             
             <!-- Output Header & Tab Nav -->
-            <div class="glass-panel rounded-2xl p-2 flex items-center justify-between flex-wrap gap-2">
+            <div class="glass-panel rounded-2xl p-2.5 flex items-center justify-between flex-wrap gap-2 sticky top-[73px] z-40 bg-slate-900/95 backdrop-blur-md shadow-xl border border-slate-800/90">
                 <div class="flex items-center gap-1 overflow-x-auto p-1 max-w-full">
-                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold transition bg-indigo-600 text-white" data-tab="tab-overview">
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold transition bg-indigo-600 text-white shrink-0" data-tab="tab-overview">
                         <i class="fa-solid fa-compass mr-1"></i> 综合策划大纲
                     </button>
-                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-code">
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition shrink-0" data-tab="tab-code">
                         <i class="fa-solid fa-terminal mr-1"></i> AI 编程 Prompt
                     </button>
-                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-amber-400 hover:text-amber-200 transition" data-tab="tab-runner">
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-amber-400 hover:text-amber-200 transition shrink-0" data-tab="tab-runner">
                         <i class="fa-solid fa-play-circle mr-1"></i> ⚡ 实时可运行原型
                     </button>
-                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-art">
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition shrink-0" data-tab="tab-art">
                         <i class="fa-solid fa-palette mr-1"></i> 美术Prompt
                     </button>
-                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-lore">
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition shrink-0" data-tab="tab-lore">
                         <i class="fa-solid fa-scroll mr-1"></i> 剧情世界观
                     </button>
-                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-preview">
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition shrink-0" data-tab="tab-preview">
                         <i class="fa-solid fa-image mr-1"></i> 概念图
                     </button>
                 </div>
 
-                <div class="flex items-center gap-2 px-2">
+                <div class="flex items-center gap-2 px-2 shrink-0 ml-auto">
                     <button id="copy-all-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition flex items-center gap-1" title="复制所有文本">
                         <i class="fa-solid fa-copy"></i> 全部复制
                     </button>
@@ -317,9 +317,9 @@
                 <!-- Tab 1: Overview & GDD Brief -->
                 <div id="tab-overview" class="tab-content flex flex-col gap-4">
                     <div class="glass-panel rounded-2xl p-5 border-l-4 border-l-indigo-500">
-                        <div class="flex items-center justify-between mb-2">
-                            <span id="res-game-title" class="text-xl font-black text-indigo-300 tracking-wide">游戏标题</span>
-                            <span id="res-genre-badge" class="px-2.5 py-1 rounded-full bg-indigo-900/50 text-indigo-300 text-xs font-semibold border border-indigo-700/50">类型</span>
+                        <div class="flex items-start sm:items-center justify-between flex-wrap gap-2 mb-2">
+                            <span id="res-game-title" class="text-xl font-black text-indigo-300 tracking-wide min-w-0 break-words">游戏标题</span>
+                            <span id="res-genre-badge" class="px-2.5 py-1 rounded-full bg-indigo-900/50 text-indigo-300 text-xs font-semibold border border-indigo-700/50 shrink-0">类型</span>
                         </div>
                         <p id="res-tagline" class="text-sm italic text-slate-400 mb-3">核心卖点说明</p>
                         <div class="text-xs text-slate-300 leading-relaxed space-y-2 border-t border-slate-800/80 pt-3" id="res-summary"></div>
@@ -327,11 +327,11 @@
 
                     <!-- Quick Code Action Callout -->
                     <div class="glass-panel rounded-2xl p-4 bg-gradient-to-r from-emerald-950/40 via-slate-900 to-indigo-950/40 border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
                             <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl shrink-0">
                                 <i class="fa-solid fa-code"></i>
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <h4 class="text-xs font-bold text-slate-200">想直接在线试玩这个游戏构想？</h4>
                                 <p class="text-[11px] text-slate-400">点击由 AI 实时将此设计编译为可直接操作的网页游戏原型</p>
                             </div>
@@ -353,14 +353,14 @@
                 <!-- Tab 2: Code Generation Prompt for AI -->
                 <div id="tab-code" class="tab-content hidden flex flex-col gap-4">
                     <div class="glass-panel rounded-2xl p-5">
-                        <div class="flex items-center justify-between mb-3">
-                            <div>
+                        <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                            <div class="min-w-0">
                                 <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
                                     <i class="fa-solid fa-terminal text-amber-400"></i> AI 编程指令 (用于 Claude / ChatGPT / Cursor)
                                 </h3>
                                 <p class="text-xs text-slate-400">将此 Prompt 粘贴至外部 AI 编程助手，生成游戏代码</p>
                             </div>
-                            <button class="copy-card-btn px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition flex items-center gap-1" data-target="res-code-prompt">
+                            <button class="copy-card-btn px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition flex items-center gap-1 shrink-0" data-target="res-code-prompt">
                                 <i class="fa-solid fa-copy"></i> 复制完整代码 Prompt
                             </button>
                         </div>
@@ -372,14 +372,14 @@
                 <div id="tab-runner" class="tab-content hidden flex flex-col gap-4">
                     <div class="glass-panel rounded-2xl p-5 border border-amber-500/30">
                         <div class="flex items-center justify-between flex-wrap gap-2 mb-3 border-b border-slate-800 pb-3">
-                            <div>
+                            <div class="min-w-0">
                                 <h3 class="text-base font-bold text-amber-300 flex items-center gap-2">
                                     <i class="fa-solid fa-laptop-code text-amber-400"></i> 实时 AI 游戏代码原型 (Live Sandbox)
                                 </h3>
                                 <p class="text-xs text-slate-400">此原型由 AI 根据核心设计实时编译生成，可以直接在下方画框内操作玩耍！</p>
                             </div>
 
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 shrink-0">
                                 <button id="restart-game-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-1" title="重置/重新开始游戏">
                                     <i class="fa-solid fa-arrows-rotate text-amber-400"></i> 重新开始
                                 </button>
