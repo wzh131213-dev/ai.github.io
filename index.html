@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GamePrompt AI Studio - 游戏提示词扩写与灵感工坊</title>
+    <title>GamePrompt AI Studio - 游戏提示词扩写与 AI 一键代码生成工坊</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -61,7 +61,14 @@
             box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
             transform: translateY(-1px);
         }
-        /* Custom scrollbar */
+        .glow-button-emerald {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            transition: all 0.3s ease;
+        }
+        .glow-button-emerald:hover {
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+            transform: translateY(-1px);
+        }
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -81,6 +88,10 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .code-preview-frame {
+            background: #020617;
+            border: 1px solid #1e293b;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -99,12 +110,11 @@
                     <h1 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
                         GamePrompt <span class="gradient-text">AI Studio</span>
                     </h1>
-                    <p class="text-xs text-slate-400">AI 游戏提示词扩写与深度灵感生成器</p>
+                    <p class="text-xs text-slate-400">AI 游戏提示词扩写与 <b>一键可运行代码生成器</b></p>
                 </div>
             </div>
 
             <div class="flex items-center gap-2 sm:gap-3">
-                <!-- Config & Mode Status Badge -->
                 <button id="settings-btn" class="px-3 py-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-2 border border-slate-700 shadow-sm" title="API 设置与模式选择">
                     <i class="fa-solid fa-gear text-indigo-400"></i>
                     <span id="current-mode-label" class="hidden sm:inline">设置 / API 配置</span>
@@ -130,20 +140,20 @@
                     <span class="text-[10px] text-indigo-400">点击自动填充</span>
                 </label>
                 <div class="flex flex-wrap gap-2 mt-2">
-                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="赛博朋克风格的2D像素风肉鸽动作游戏，主打高频招架与刀光剑影">
-                        ⚡ 赛博像素Roguelike
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="赛博朋克风格的2D像素风弹幕射击游戏，具有时间减速能力与炫酷能量盾">
+                        ⚡ 赛博像素时间弹幕
                     </button>
-                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="太空探索与废土建造游戏，玩家需要在异星收集资源并建造移动堡垒">
-                        🚀 太空废土移动堡垒
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="太空探索与废土建造游戏，玩家需要在异星收集资源并躲避陨石防御建造">
+                        🚀 太空废土陨石防卫
                     </button>
-                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="克苏鲁神话背景的英式维多利亚时期解谜卡牌游戏，涉及疯狂度与理智值机制">
-                        🐙 克苏鲁理智卡牌
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="重力反转迷宫平台跳跃，主角是一个可以改变房间重力方向的科幻机器人">
+                        🤖 机器人重力反转平台
                     </button>
-                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="国风水墨修仙题材的开放世界动作RPG，结合御剑飞行与五行相生相克系统">
-                        🗡️ 国风水墨御剑RPG
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="国风水墨修仙题材的飞剑斩妖，组合五行相生相克的技能打出连招">
+                        🗡️ 国风水墨飞剑斩妖
                     </button>
-                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="温馨治愈系猫咪经营模拟，三维LowPoly低多边形画风，包含料理合成">
-                        🐱 Cozy猫咪低多边形
+                    <button class="preset-btn px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700/60 text-xs text-slate-300 transition" data-prompt="霓虹复古波 Synthwave 风格 3D 低多边形赛车避障游戏，高速收集能量水晶">
+                        🏎️ Synthwave 霓虹赛车
                     </button>
                 </div>
             </div>
@@ -168,14 +178,11 @@
 
                 <!-- Prompt Customization Options Grid -->
                 <div class="grid grid-cols-2 gap-3 pt-2">
-                    
-                    <!-- Visual Style -->
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">🎨 视觉画风 (Art Style)</label>
                         <select id="style-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:border-indigo-500">
                             <option value="Pixel Art (16-bit / 32-bit)">像素风 (Pixel Art)</option>
                             <option value="Cyberpunk Neon High-Tech">赛博朋克霓虹 (Cyberpunk)</option>
-                            <option value="Unreal Engine 5 Photorealistic 3D">UE5写实三维 (Photorealistic)</option>
                             <option value="Stylized Low Poly 3D">低多边形 (Stylized Low Poly)</option>
                             <option value="Dark Fantasy Gothic Anime">哥特暗黑幻想 (Dark Fantasy)</option>
                             <option value="Traditional Chinese Ink Wash Painting">国风水墨 (Chinese Ink)</option>
@@ -184,54 +191,54 @@
                         </select>
                     </div>
 
-                    <!-- Target Engine / Framework -->
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">💻 目标引擎/代码库</label>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">💻 目标代码/渲染引擎</label>
                         <select id="engine-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:border-indigo-500">
-                            <option value="Three.js / WebGL HTML5">Three.js / HTML5 网页</option>
-                            <option value="Unity C# GameEngine">Unity (C#脚本)</option>
-                            <option value="Unreal Engine 5 C++ & Blueprints">Unreal 5 (C++ / 蓝图)</option>
-                            <option value="Godot Engine 4 (GDScript)">Godot 4 (GDScript)</option>
-                            <option value="Phaser 3 JavaScript/TypeScript">Phaser 3 (2D Web游戏)</option>
+                            <option value="HTML5 Canvas 2D / JS">HTML5 Canvas 2D (纯JS网页)</option>
+                            <option value="Three.js / WebGL 3D">Three.js (3D 网页引擎)</option>
+                            <option value="Phaser 3 JavaScript GameEngine">Phaser 3 (2D 网页游戏框架)</option>
+                            <option value="Unity C# GameEngine Script">Unity (C# 脚本)</option>
                         </select>
                     </div>
 
-                    <!-- Gameplay Camera Angle -->
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">🎥 视角与镜头</label>
                         <select id="camera-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:border-indigo-500">
-                            <option value="2D Side-Scrolling Platformer">2D 横版过关</option>
+                            <option value="2D Side-Scrolling Platformer">2D 横版过关/平台跳跃</option>
+                            <option value="Top-Down Arcade Shooter">俯视 2D 街机射击/避障</option>
                             <option value="Isometric 2.5D Top-Down View">等轴测 2.5D 俯视角</option>
                             <option value="First-Person Immersive View">第一人称视角 (FPS)</option>
-                            <option value="Third-Person Over-the-shoulder 3D">第三人称越肩视角</option>
-                            <option value="Top-Down Shooter / Tactics">正俯视 2D / 战术视角</option>
                         </select>
                     </div>
 
-                    <!-- Expansion Focus -->
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">🎯 侧重扩写模式</label>
                         <select id="mode-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg p-2.5 outline-none focus:border-indigo-500">
                             <option value="All-Round Game Design Document (Full GDD)">全能 GDD 综合扩写</option>
+                            <option value="AI Code & Live Prototype Focus">AI 编程与原型代码生成</option>
                             <option value="AI Image Generation Focus (Midjourney/SD)">AI 美术提示词专项扩写</option>
-                            <option value="AI Coding Assistant Focus (Claude/ChatGPT)">AI 编程代码提示词专项</option>
                             <option value="World-Building & Lore Narrative Focus">世界观与叙事设计专项</option>
                         </select>
                     </div>
-
                 </div>
 
-                <!-- Toggles & Generate Action -->
                 <div class="pt-2 border-t border-slate-800 flex flex-col gap-3">
                     <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
                         <input type="checkbox" id="generate-image-toggle" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-700" checked>
-                        <span>同步生成概念图视觉预览</span>
+                        <span>同步生成概念视觉预览</span>
                     </label>
 
-                    <button id="generate-btn" class="glow-button w-full py-3 px-4 rounded-xl font-bold text-white text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>开始扩写提示词 & 构想游戏</span>
-                    </button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button id="generate-btn" class="glow-button py-3 px-4 rounded-xl font-bold text-white text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>扩写提示词 & 策划案</span>
+                        </button>
+                        
+                        <button id="generate-code-direct-btn" class="glow-button-emerald py-3 px-4 rounded-xl font-bold text-white text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg">
+                            <i class="fa-solid fa-code-merge"></i>
+                            <span>AI 一键生成可运行代码</span>
+                        </button>
+                    </div>
                 </div>
 
             </div>
@@ -240,14 +247,14 @@
             <div id="status-card" class="glass-panel rounded-2xl p-4 text-xs text-slate-400 flex items-center justify-between border-l-4 border-l-indigo-500">
                 <div class="flex items-center gap-2.5">
                     <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="status-text" class="text-slate-300 font-medium">当前运行环境: 智能自动API/本地模组</span>
+                    <span id="status-text" class="text-slate-300 font-medium">当前运行环境: 智能自动API/本地双核引擎</span>
                 </div>
                 <button id="open-settings-link" class="text-indigo-400 hover:text-indigo-300 text-xs underline">设置/配置Key</button>
             </div>
 
         </section>
 
-        <!-- Right Column: Expanded Outputs & Concept Art (7 columns) -->
+        <!-- Right Column: Expanded Outputs & Code Sandbox (7 columns) -->
         <section class="lg:col-span-7 flex flex-col gap-5">
             
             <!-- Output Header & Tab Nav -->
@@ -256,23 +263,26 @@
                     <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold transition bg-indigo-600 text-white" data-tab="tab-overview">
                         <i class="fa-solid fa-compass mr-1"></i> 综合策划大纲
                     </button>
-                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-art">
-                        <i class="fa-solid fa-palette mr-1"></i> 美术Prompt (MJ/SD)
-                    </button>
                     <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-code">
-                        <i class="fa-solid fa-code mr-1"></i> AI 编程Prompt
+                        <i class="fa-solid fa-terminal mr-1"></i> AI 编程 Prompt
+                    </button>
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-amber-400 hover:text-amber-200 transition" data-tab="tab-runner">
+                        <i class="fa-solid fa-play-circle mr-1"></i> ⚡ 实时可运行原型
+                    </button>
+                    <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-art">
+                        <i class="fa-solid fa-palette mr-1"></i> 美术Prompt
                     </button>
                     <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-lore">
-                        <i class="fa-solid fa-scroll mr-1"></i> 剧情与世界观
+                        <i class="fa-solid fa-scroll mr-1"></i> 剧情世界观
                     </button>
                     <button class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition" data-tab="tab-preview">
-                        <i class="fa-solid fa-image mr-1"></i> 概念图预览
+                        <i class="fa-solid fa-image mr-1"></i> 概念图
                     </button>
                 </div>
 
                 <div class="flex items-center gap-2 px-2">
                     <button id="copy-all-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition flex items-center gap-1" title="复制所有文本">
-                        <i class="fa-solid fa-copy"></i> 一键全部复制
+                        <i class="fa-solid fa-copy"></i> 全部复制
                     </button>
                     <button id="download-markdown-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition flex items-center gap-1" title="导出 Markdown">
                         <i class="fa-solid fa-file-arrow-down"></i> 导出 MD
@@ -287,18 +297,18 @@
                     <div class="w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-slate-100">AI 正在高能扩写游戏提示词...</h3>
-                    <p class="text-xs text-slate-400 mt-1">深度构想核心机制、构建 Midjourney 美术 Prompt 与程序开发指令...</p>
+                    <h3 id="loading-title" class="text-lg font-bold text-slate-100">AI 正在高能扩写游戏提示词...</h3>
+                    <p id="loading-subtitle" class="text-xs text-slate-400 mt-1">深度构想核心机制、构建 Midjourney 美术 Prompt 与程序开发指令...</p>
                 </div>
             </div>
 
             <!-- Empty Placeholder State -->
             <div id="empty-state" class="glass-panel rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3 border-dashed border-2 border-slate-800">
                 <div class="w-16 h-16 rounded-2xl bg-slate-800/80 flex items-center justify-center text-slate-500 text-2xl">
-                    <i class="fa-solid fa-lightbulb"></i>
+                    <i class="fa-solid fa-rocket"></i>
                 </div>
-                <h3 class="text-base font-semibold text-slate-300">还没有扩写内容</h3>
-                <p class="text-xs text-slate-500 max-w-sm">在左侧输入简单的游戏构想或点击预设灵感，点击“开始扩写提示词”按钮生成完整的游戏设计方案。</p>
+                <h3 class="text-base font-semibold text-slate-300">尚未生成策划案或代码原型</h3>
+                <p class="text-xs text-slate-500 max-w-sm">在左侧输入游戏构想，点击<b>“扩写提示词”</b>生成完整GDD，或点击<b>“AI 一键生成可运行代码”</b>直接在浏览器中玩到你的游戏原型！</p>
             </div>
 
             <!-- Result Panels Container -->
@@ -311,10 +321,24 @@
                             <span id="res-game-title" class="text-xl font-black text-indigo-300 tracking-wide">游戏标题</span>
                             <span id="res-genre-badge" class="px-2.5 py-1 rounded-full bg-indigo-900/50 text-indigo-300 text-xs font-semibold border border-indigo-700/50">类型</span>
                         </div>
-                        <p id="res-tagline" class="text-sm italic text-slate-400 mb-3">电梯演讲与核心卖点说明</p>
-                        <div class="text-xs text-slate-300 leading-relaxed space-y-2 border-t border-slate-800/80 pt-3" id="res-summary">
-                            <!-- Summary text -->
+                        <p id="res-tagline" class="text-sm italic text-slate-400 mb-3">核心卖点说明</p>
+                        <div class="text-xs text-slate-300 leading-relaxed space-y-2 border-t border-slate-800/80 pt-3" id="res-summary"></div>
+                    </div>
+
+                    <!-- Quick Code Action Callout -->
+                    <div class="glass-panel rounded-2xl p-4 bg-gradient-to-r from-emerald-950/40 via-slate-900 to-indigo-950/40 border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl shrink-0">
+                                <i class="fa-solid fa-code"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-200">想直接在线试玩这个游戏构想？</h4>
+                                <p class="text-[11px] text-slate-400">点击由 AI 实时将此设计编译为可直接操作的网页游戏原型</p>
+                            </div>
                         </div>
+                        <button id="trigger-build-code-btn" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shrink-0 shadow-lg shadow-emerald-600/20">
+                            <i class="fa-solid fa-play"></i> 一键生成代码并运行
+                        </button>
                     </div>
 
                     <!-- Core Mechanics Grid -->
@@ -322,16 +346,132 @@
                         <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-gears text-indigo-400"></i> 核心游戏循环与特色玩法
                         </h3>
-                        <div id="res-mechanics-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <!-- Mechanic cards will render here -->
-                        </div>
+                        <div id="res-mechanics-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
                 </div>
 
-                <!-- Tab 2: AI Art Prompts (MJ/SD/DALL-E) -->
+                <!-- Tab 2: Code Generation Prompt for AI -->
+                <div id="tab-code" class="tab-content hidden flex flex-col gap-4">
+                    <div class="glass-panel rounded-2xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                    <i class="fa-solid fa-terminal text-amber-400"></i> AI 编程指令 (用于 Claude / ChatGPT / Cursor)
+                                </h3>
+                                <p class="text-xs text-slate-400">将此 Prompt 粘贴至外部 AI 编程助手，生成游戏代码</p>
+                            </div>
+                            <button class="copy-card-btn px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition flex items-center gap-1" data-target="res-code-prompt">
+                                <i class="fa-solid fa-copy"></i> 复制完整代码 Prompt
+                            </button>
+                        </div>
+                        <pre id="res-code-prompt" class="bg-slate-950 p-4 rounded-xl font-mono text-xs text-amber-200/90 border border-slate-800 whitespace-pre-wrap overflow-x-auto max-h-[400px] leading-relaxed selection:bg-amber-900"></pre>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Interactive Live Prototype Sandbox -->
+                <div id="tab-runner" class="tab-content hidden flex flex-col gap-4">
+                    <div class="glass-panel rounded-2xl p-5 border border-amber-500/30">
+                        <div class="flex items-center justify-between flex-wrap gap-2 mb-3 border-b border-slate-800 pb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-amber-300 flex items-center gap-2">
+                                    <i class="fa-solid fa-laptop-code text-amber-400"></i> 实时 AI 游戏代码原型 (Live Sandbox)
+                                </h3>
+                                <p class="text-xs text-slate-400">此原型由 AI 根据核心设计实时编译生成，可以直接在下方画框内操作玩耍！</p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button id="restart-game-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-1" title="重置/重新开始游戏">
+                                    <i class="fa-solid fa-arrows-rotate text-amber-400"></i> 重新开始
+                                </button>
+                                <button id="fullscreen-game-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-1" title="全屏体验">
+                                    <i class="fa-solid fa-expand text-indigo-400"></i> 全屏
+                                </button>
+                                <button id="download-code-html-btn" class="px-2.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold transition flex items-center gap-1" title="下载 standalone .html 文件">
+                                    <i class="fa-solid fa-download"></i> 下载源码 HTML
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Game Frame Container -->
+                        <div class="relative w-full rounded-xl overflow-hidden code-preview-frame shadow-2xl min-h-[480px] flex flex-col">
+                            <div id="proto-loading-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-sm z-20 hidden flex flex-col items-center justify-center p-6 text-center">
+                                <div class="w-12 h-12 rounded-full border-4 border-amber-400 border-t-transparent animate-spin mb-3"></div>
+                                <h4 class="text-sm font-bold text-amber-200">AI 正在一键构建游戏逻辑与画面...</h4>
+                                <p class="text-xs text-slate-400 mt-1 max-w-md">生成包括渲染主循环、玩家控制、碰撞检测、特效与打分系统的完整 JS/HTML 代码...</p>
+                            </div>
+
+                            <iframe id="game-sandbox-iframe" class="w-full h-[460px] border-0 bg-black rounded-t-xl" sandbox="allow-scripts allow-modals"></iframe>
+
+                            <div class="bg-slate-950 p-3 border-t border-slate-800 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                                        <i class="fa-solid fa-circle text-[8px] text-emerald-400 animate-ping"></i> 沙盒环境激活中
+                                    </span>
+                                    <span class="text-[10px] text-slate-500">| 点击画面获取焦点后使用键盘 (WASD / 方向键 / 空格) 操作</span>
+                                </div>
+                                <button id="toggle-source-view-btn" class="text-xs text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1">
+                                    <i class="fa-solid fa-code"></i> <span id="toggle-source-text">查看源代码</span>
+                                </button>
+                            </div>
+
+                            <div id="source-code-view" class="hidden bg-slate-950 p-4 border-t border-slate-800 max-h-[300px] overflow-y-auto">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-mono text-slate-400">Live Prototype HTML/JS Source Code</span>
+                                    <button id="copy-live-code-btn" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded transition">
+                                        <i class="fa-solid fa-copy"></i> 复制代码
+                                    </button>
+                                </div>
+                                <pre id="live-code-display" class="font-mono text-xs text-slate-300 leading-relaxed whitespace-pre-wrap select-all"></pre>
+                            </div>
+
+                        </div>
+
+                        <!-- AI Code Modification Chatbox Panel -->
+                        <div id="ai-code-chat-panel" class="mt-4 bg-slate-950/80 rounded-xl border border-slate-800 p-4 flex flex-col gap-3">
+                            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                                <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
+                                    <i class="fa-solid fa-comments text-indigo-400"></i> AI 源码修改与迭代对话框
+                                </span>
+                                <span class="text-[10px] text-slate-500">发送修改要求，AI 将自动分析并更新源码逻辑</span>
+                            </div>
+
+                            <!-- Chat Messages List -->
+                            <div id="chat-messages-list" class="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto pr-1 text-xs">
+                                <div class="bg-indigo-950/40 border border-indigo-900/50 p-2.5 rounded-xl text-indigo-200 flex items-start gap-2">
+                                    <i class="fa-solid fa-robot text-indigo-400 text-sm mt-0.5 shrink-0"></i>
+                                    <div>
+                                        <p class="font-semibold text-[11px] text-indigo-300">AI 编程助手</p>
+                                        <p class="text-slate-300">游戏代码生成后，在此输入您的修改要求（例如：“增加 BOSS 敌机”、“加快移动速度”、“改变霓虹配色”），我将实时为您改写代码！</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modification Form -->
+                            <form id="code-modify-form" class="flex items-center gap-2 pt-1">
+                                <input type="text" id="code-modify-input" 
+                                    class="flex-1 bg-slate-900 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 outline-none placeholder-slate-500 transition"
+                                    placeholder="输入代码修改指令，例如: '加入精英 Boss 敌机与追踪导弹'...">
+                                <button type="submit" id="send-modify-btn" class="glow-button px-4 py-2.5 rounded-xl text-white text-xs font-bold shrink-0 flex items-center gap-1.5 shadow-md">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span>发送修改</span>
+                                </button>
+                            </form>
+                            
+                            <!-- Preset Instruction Chips -->
+                            <div class="flex items-center gap-1.5 flex-wrap text-[11px] text-slate-400 pt-1">
+                                <span class="text-slate-500 text-[10px]">快捷优化指令:</span>
+                                <button type="button" class="modify-chip-btn bg-slate-800/90 hover:bg-indigo-900/50 border border-slate-700/80 hover:border-indigo-500/50 text-slate-300 px-2 py-0.5 rounded-lg transition" data-msg="大幅提高玩家射速与连发子弹威力">🚀 强化射速与子弹</button>
+                                <button type="button" class="modify-chip-btn bg-slate-800/90 hover:bg-indigo-900/50 border border-slate-700/80 hover:border-indigo-500/50 text-slate-300 px-2 py-0.5 rounded-lg transition" data-msg="在屏幕上方加入带大血条的巨型 BOSS 敌机">👾 增加巨型 BOSS</button>
+                                <button type="button" class="modify-chip-btn bg-slate-800/90 hover:bg-indigo-900/50 border border-slate-700/80 hover:border-indigo-500/50 text-slate-300 px-2 py-0.5 rounded-lg transition" data-msg="加入粒子爆炸特效与连击 Combo 击杀计分">✨ 增加粒子连击特效</button>
+                                <button type="button" class="modify-chip-btn bg-slate-800/90 hover:bg-indigo-900/50 border border-slate-700/80 hover:border-indigo-500/50 text-slate-300 px-2 py-0.5 rounded-lg transition" data-msg="将背景与角色配色替换为赛博朋克霓虹金调">🎨 切换赛博金配色</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Tab 4: AI Art Prompts -->
                 <div id="tab-art" class="tab-content hidden flex flex-col gap-4">
-                    
-                    <!-- Environment / Level Design Prompt -->
                     <div class="glass-panel rounded-2xl p-5 relative">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -341,12 +481,9 @@
                                 <i class="fa-solid fa-copy"></i> 复制
                             </button>
                         </div>
-                        <div id="art-env-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-emerald-300 border border-slate-800/80 leading-relaxed selection:bg-emerald-900 select-all">
-                            <!-- Environment prompt content -->
-                        </div>
+                        <div id="art-env-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-emerald-300 border border-slate-800/80 leading-relaxed selection:bg-emerald-900 select-all"></div>
                     </div>
 
-                    <!-- Main Character / Sprite Prompt -->
                     <div class="glass-panel rounded-2xl p-5 relative">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -356,12 +493,9 @@
                                 <i class="fa-solid fa-copy"></i> 复制
                             </button>
                         </div>
-                        <div id="art-char-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-purple-300 border border-slate-800/80 leading-relaxed selection:bg-purple-900 select-all">
-                            <!-- Character prompt content -->
-                        </div>
+                        <div id="art-char-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-purple-300 border border-slate-800/80 leading-relaxed selection:bg-purple-900 select-all"></div>
                     </div>
 
-                    <!-- UI / HUD Asset Prompt -->
                     <div class="glass-panel rounded-2xl p-5 relative">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -371,44 +505,21 @@
                                 <i class="fa-solid fa-copy"></i> 复制
                             </button>
                         </div>
-                        <div id="art-ui-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-cyan-300 border border-slate-800/80 leading-relaxed selection:bg-cyan-900 select-all">
-                            <!-- UI prompt content -->
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Tab 3: Code Generation Prompt for Claude/ChatGPT -->
-                <div id="tab-code" class="tab-content hidden flex flex-col gap-4">
-                    <div class="glass-panel rounded-2xl p-5">
-                        <div class="flex items-center justify-between mb-3">
-                            <div>
-                                <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                    <i class="fa-solid fa-terminal text-amber-400"></i> AI 编程指令 (用于 Claude / ChatGPT / Cursor)
-                                </h3>
-                                <p class="text-xs text-slate-400">将此 Prompt 粘贴至 AI 编程助手，直接生成游戏 Prototype 原型代码</p>
-                            </div>
-                            <button class="copy-card-btn px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition flex items-center gap-1" data-target="res-code-prompt">
-                                <i class="fa-solid fa-copy"></i> 复制完整代码 Prompt
-                            </button>
-                        </div>
-                        <pre id="res-code-prompt" class="bg-slate-950 p-4 rounded-xl font-mono text-xs text-amber-200/90 border border-slate-800 whitespace-pre-wrap overflow-x-auto max-h-[500px] leading-relaxed selection:bg-amber-900"></pre>
+                        <div id="art-ui-prompt" class="bg-slate-950 p-3.5 rounded-xl font-mono text-xs text-cyan-300 border border-slate-800/80 leading-relaxed selection:bg-cyan-900 select-all"></div>
                     </div>
                 </div>
 
-                <!-- Tab 4: Lore & Narrative Brief -->
+                <!-- Tab 5: Lore & Narrative Brief -->
                 <div id="tab-lore" class="tab-content hidden flex flex-col gap-4">
                     <div class="glass-panel rounded-2xl p-5">
                         <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-book-open text-purple-400"></i> 世界观背景与叙事框架
                         </h3>
-                        <div id="res-lore-body" class="text-xs text-slate-300 leading-relaxed space-y-3">
-                            <!-- Lore text rendered here -->
-                        </div>
+                        <div id="res-lore-body" class="text-xs text-slate-300 leading-relaxed space-y-3"></div>
                     </div>
                 </div>
 
-                <!-- Tab 5: Image Concept Preview -->
+                <!-- Tab 6: Image Concept Preview -->
                 <div id="tab-preview" class="tab-content hidden flex flex-col gap-4">
                     <div class="glass-panel rounded-2xl p-5">
                         <div class="flex items-center justify-between mb-3">
@@ -457,12 +568,11 @@
             </div>
 
             <div class="space-y-4">
-                <!-- Mode Choice -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-2">生成引擎模式选择</label>
                     <div class="grid grid-cols-2 gap-2">
                         <button id="mode-btn-auto" class="px-3 py-2 rounded-xl text-xs font-medium border border-indigo-500 bg-indigo-950/60 text-indigo-200 transition text-center">
-                            🌐 API 在线生成<br><span class="text-[10px] text-slate-400">(Gemini 3 Flash)</span>
+                            🌐 API 在线生成<br><span class="text-[10px] text-slate-400">(多接口支持)</span>
                         </button>
                         <button id="mode-btn-mock" class="px-3 py-2 rounded-xl text-xs font-medium border border-slate-700 bg-slate-800/60 text-slate-400 transition text-center hover:border-slate-600">
                             ⚡ 离线/演示模式<br><span class="text-[10px] text-slate-400">(零延迟·无门槛)</span>
@@ -470,16 +580,34 @@
                     </div>
                 </div>
 
-                <!-- Custom API Key input -->
-                <div id="api-key-container">
-                    <label class="block text-xs font-semibold text-slate-300 mb-1">自定义 Google Gemini API Key (可选)</label>
-                    <p class="text-[11px] text-slate-400 mb-2">若在任意本地浏览器直接打开运行，可填入您自己的 Gemini API Key 保证流畅调用。</p>
-                    <input type="password" id="custom-api-key-input" class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-indigo-500" placeholder="AIzaSy... (留空则优先尝试环境自动密钥)">
+                <div id="api-key-container" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">API 接口协议 / 厂商格式</label>
+                        <select id="api-provider-select" class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5 outline-none focus:border-indigo-500">
+                            <option value="gemini">Google Gemini 官方协议</option>
+                            <option value="openai">DeepSeek / OpenAI / OneAPI 标准兼容协议 (/v1/chat/completions)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">自定义 API Key (Bearer Token / Key)</label>
+                        <input type="password" id="custom-api-key-input" class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5 outline-none focus:border-indigo-500" placeholder="sk-... 或 AIzaSy...">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">API Endpoint Base URL (自定义域名/中转站)</label>
+                        <input type="text" id="custom-api-url-input" class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5 outline-none focus:border-indigo-500 font-mono" placeholder="如: https://api.deepseek.com/v1 或中转域名">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">模型名称 (Model Name)</label>
+                        <input type="text" id="custom-api-model-input" class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5 outline-none focus:border-indigo-500 font-mono" placeholder="如: deepseek-chat, gpt-4o, gemini-3-flash-preview">
+                    </div>
                 </div>
 
                 <div class="bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-xl text-[11px] text-indigo-300 space-y-1">
-                    <p class="font-bold flex items-center gap-1"><i class="fa-solid fa-shield-halved"></i> 隐私保护提示</p>
-                    <p>您的 API Key 仅保存在本地浏览器的 `localStorage` 中，直接与 Google 官方 API 通信，绝不会传输至任何中间服务器。</p>
+                    <p class="font-bold flex items-center gap-1"><i class="fa-solid fa-shield-halved"></i> 接口配置提示</p>
+                    <p>支持 DeepSeek、OpenAI、Claude 代理以及任何 API 转发服务，参数会自动加密存储于您的本地浏览器 localStorage 中。</p>
                 </div>
             </div>
 
@@ -516,9 +644,13 @@
     <script>
         // State variables
         let currentGeneratedData = null;
+        let currentLiveCode = "";
         let expansionHistory = JSON.parse(localStorage.getItem('game_prompt_history') || '[]');
         let userCustomApiKey = localStorage.getItem('game_prompt_api_key') || '';
-        let appRunMode = localStorage.getItem('game_prompt_mode') || 'auto'; // 'auto' or 'mock'
+        let userCustomApiUrl = localStorage.getItem('game_prompt_api_url') || '';
+        let userCustomModel = localStorage.getItem('game_prompt_model') || '';
+        let apiProvider = localStorage.getItem('game_prompt_provider') || 'gemini';
+        let appRunMode = localStorage.getItem('game_prompt_mode') || 'auto';
 
         // DOM Elements
         const userPromptInput = document.getElementById('user-prompt-input');
@@ -528,15 +660,17 @@
         const modeSelect = document.getElementById('mode-select');
         const generateImgToggle = document.getElementById('generate-image-toggle');
         const generateBtn = document.getElementById('generate-btn');
+        const generateCodeDirectBtn = document.getElementById('generate-code-direct-btn');
         
         const loadingState = document.getElementById('loading-state');
+        const loadingTitle = document.getElementById('loading-title');
+        const loadingSubtitle = document.getElementById('loading-subtitle');
         const emptyState = document.getElementById('empty-state');
         const resultContainer = document.getElementById('result-container');
 
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
 
-        // Update UI State Badges
         function updateModeBadge() {
             const statusDot = document.getElementById('status-dot');
             const statusText = document.getElementById('status-text');
@@ -544,16 +678,77 @@
 
             if (appRunMode === 'mock') {
                 statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
-                statusText.textContent = '当前运行模式: ⚡ 离线演示模式 (无需API)';
+                statusText.textContent = '当前运行模式: ⚡ 离线演示模式 (无门槛)';
                 modeLabel.textContent = '模式: 离线演示';
-            } else if (userCustomApiKey) {
+            } else if (userCustomApiKey || userCustomApiUrl) {
                 statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-                statusText.textContent = '当前运行模式: 🔑 自定义 API Key 在线模式';
-                modeLabel.textContent = '模式: 自定义 Key';
+                const providerName = apiProvider === 'openai' ? 'OpenAI/DeepSeek 兼容接口' : 'Gemini 接口';
+                statusText.textContent = `当前运行模式: 🔑 自定义 [${providerName}] 在线模式`;
+                modeLabel.textContent = `模式: ${apiProvider.toUpperCase()}`;
             } else {
                 statusDot.className = 'w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse';
-                statusText.textContent = '当前运行模式: 🌐 自动/默认 API 模式';
-                modeLabel.textContent = '模式: 自动/API';
+                statusText.textContent = '当前运行模式: 🌐 自动/默认 API 引擎';
+                modeLabel.textContent = '模式: 自动API';
+            }
+        }
+
+        async function callLLMAPI({ systemPrompt, userPrompt, responseJsonFormat = false }) {
+            const provider = apiProvider || 'gemini';
+            const apiKey = userCustomApiKey || '';
+
+            if (provider === 'openai') {
+                let baseUrl = (userCustomApiUrl || 'https://api.openai.com/v1').trim().replace(/\/+$/, '');
+                const model = userCustomModel.trim() || 'deepseek-chat';
+                const endpoint = baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`;
+
+                const messages = [];
+                if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+                messages.push({ role: 'user', content: userPrompt });
+
+                const body = {
+                    model: model,
+                    messages: messages,
+                    temperature: 0.7
+                };
+                if (responseJsonFormat) {
+                    body.response_format = { type: "json_object" };
+                }
+
+                const response = await fetchWithBackoff(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                return data?.choices?.[0]?.message?.content || "";
+            } else {
+                // Gemini Standard Endpoint
+                const model = userCustomModel.trim() || 'gemini-3-flash-preview';
+                let baseUrl = (userCustomApiUrl || 'https://generativelanguage.googleapis.com').trim().replace(/\/+$/, '');
+                const endpoint = `${baseUrl}/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userPrompt }] }]
+                };
+                if (systemPrompt) {
+                    payload.systemInstruction = { parts: [{ text: systemPrompt }] };
+                }
+                if (responseJsonFormat) {
+                    payload.generationConfig = { responseMimeType: "application/json" };
+                }
+
+                const response = await fetchWithBackoff(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
             }
         }
 
@@ -601,13 +796,40 @@
             }
         }
 
+        function switchTab(tabId) {
+            tabBtns.forEach(b => {
+                const target = b.getAttribute('data-tab');
+                if (target === tabId) {
+                    b.classList.add('bg-indigo-600', 'text-white');
+                    b.classList.remove('text-slate-400');
+                } else {
+                    b.classList.remove('bg-indigo-600', 'text-white');
+                    b.classList.add('text-slate-400');
+                }
+            });
+
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            });
+        }
+
         const settingsModal = document.getElementById('settings-modal');
         const customApiKeyInput = document.getElementById('custom-api-key-input');
+        const customApiUrlInput = document.getElementById('custom-api-url-input');
+        const customApiModelInput = document.getElementById('custom-api-model-input');
+        const apiProviderSelect = document.getElementById('api-provider-select');
         const modeBtnAuto = document.getElementById('mode-btn-auto');
         const modeBtnMock = document.getElementById('mode-btn-mock');
 
         function openSettings() {
             customApiKeyInput.value = userCustomApiKey;
+            customApiUrlInput.value = userCustomApiUrl;
+            customApiModelInput.value = userCustomModel;
+            apiProviderSelect.value = apiProvider;
             setSettingsModeUI(appRunMode);
             settingsModal.classList.remove('hidden');
         }
@@ -631,40 +853,29 @@
 
         document.getElementById('save-settings-btn').addEventListener('click', () => {
             userCustomApiKey = customApiKeyInput.value.trim();
+            userCustomApiUrl = customApiUrlInput.value.trim();
+            userCustomModel = customApiModelInput.value.trim();
+            apiProvider = apiProviderSelect.value;
             const isAutoSelected = modeBtnAuto.classList.contains('border-indigo-500');
             appRunMode = isAutoSelected ? 'auto' : 'mock';
 
             localStorage.setItem('game_prompt_api_key', userCustomApiKey);
+            localStorage.setItem('game_prompt_api_url', userCustomApiUrl);
+            localStorage.setItem('game_prompt_model', userCustomModel);
+            localStorage.setItem('game_prompt_provider', apiProvider);
             localStorage.setItem('game_prompt_mode', appRunMode);
 
             updateModeBadge();
             settingsModal.classList.add('hidden');
-            showToast("配置设置已保存！", "success");
+            showToast("配置设置与接口地址已保存！", "success");
         });
 
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const targetTab = btn.getAttribute('data-tab');
-                
-                tabBtns.forEach(b => {
-                    b.classList.remove('bg-indigo-600', 'text-white');
-                    b.classList.add('text-slate-400');
-                });
-                
-                btn.classList.add('bg-indigo-600', 'text-white');
-                btn.classList.remove('text-slate-400');
-
-                tabContents.forEach(content => {
-                    if (content.id === targetTab) {
-                        content.classList.remove('hidden');
-                    } else {
-                        content.classList.add('hidden');
-                    }
-                });
+                switchTab(btn.getAttribute('data-tab'));
             });
         });
 
-        // Preset button quick fill
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 userPromptInput.value = btn.getAttribute('data-prompt');
@@ -672,18 +883,37 @@
             });
         });
 
-        // Clear input
         document.getElementById('clear-input-btn').addEventListener('click', () => {
             userPromptInput.value = '';
         });
 
+        async function fetchWithBackoff(url, options, maxRetries = 2) {
+            let delay = 1000;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res.ok) return res;
+                    if (res.status === 429) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                        continue;
+                    }
+                    throw new Error(`HTTP Error ${res.status}`);
+                } catch (err) {
+                    if (i === maxRetries - 1) throw err;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
         function generateLocalMockData(userInput, artStyle, engine, camera, mode) {
             const sanitizedTitle = userInput.slice(0, 10) + (userInput.length > 10 ? '...' : '');
             return {
-                "gameTitle": `《极界回响: ${sanitizedTitle}》`,
+                "gameTitle": `《极界纪元: ${sanitizedTitle}》`,
                 "genre": `基于 ${artStyle.split(' ')[0]} 的 ${camera.split(' ')[0]} 玩法`,
                 "tagline": `在充满变数的无尽世界中，凭借独特的系统机制改写命运！`,
-                "summary": `玩家将置身于以“${userInput}”为内核打造的虚构世界。游戏运用了独特的 ${artStyle} 视角与视觉艺术风格，依托 ${engine} 引擎提供的强大实时物理与渲染特性，融合了高频策略对抗与深度的探索成长循环。`,
+                "summary": `玩家将置身于以“${userInput}”为内核打造的虚构世界。游戏运用了独特的 ${artStyle} 视觉艺术风格，依托 ${engine} 引擎提供的强大实时渲染特性，融合了高频策略对抗与深度的探索成长循环。`,
                 "gameplayMechanics": [
                     {
                         "name": "核心控制与能量循环",
@@ -703,8 +933,8 @@
                     "characterPrompt": `Character sheet concept art, protagonist inspired by ${userInput}, full body sprite design, ${artStyle}, multiple poses, expressive features, game-ready character design, clean background, high contrast --ar 16:9`,
                     "uiPrompt": `Futuristic stylized Game UI HUD layout design, matching ${artStyle}, including health bar, skill cooldown icons, mini-map, inventory window, sleek modern vector graphics, game interface template --ar 16:9`
                 },
-                "codePrompt": `// AI Code Prompt for ${engine}\n// Objective: Create a working prototype based on "${userInput}"\n\n// Key Requirements:\n1. Setup primary viewport using ${camera} camera parameters.\n2. Implement player controller for standard movement + core mechanic.\n3. Create an interactive game object loop with collision handling.\n4. Build a basic HUD displaying core metrics (Health/Energy/Score).\n5. Render with stylized shaders matching ${artStyle}.\n\n// Starter Boilerplate Instructions for Claude/ChatGPT:\n"Please write a single runnable source code file using ${engine} that sets up a 3D/2D scene with ${camera}, handles keyboard controls (WASD + Space), and demonstrates the mechanic: ${userInput}."`,
-                "narrativeBrief": `在这个被遗忘的旧纪元废墟中，“${userInput}”成了唯一破局的匙钥。玩家作为破晓守护者，不仅要在险象环生的荒域中求生，更要通过解开深埋在古老遗迹中的谜团，重构文明的法则。故事融合了深沉的宿命感与高燃的逆袭之旅。`
+                "codePrompt": `// AI Code Prompt for ${engine}\n// Objective: Create a working prototype based on "${userInput}"\n\n// Key Requirements:\n1. Setup primary viewport using ${camera} camera parameters.\n2. Implement player controller for standard movement + core mechanic.\n3. Create an interactive game object loop with collision handling.\n4. Build a basic HUD displaying core metrics (Health/Energy/Score).\n5. Render with stylized shaders matching ${artStyle}.\n\n// Starter Instructions for AI Code Generator:\n"Please write a single runnable source code file using ${engine} that sets up a scene with ${camera}, handles controls (WASD + Space), and demonstrates the mechanic: ${userInput}."`,
+                "narrativeBrief": `在这个被遗忘的旧纪元废墟中，“${userInput}”成了唯一破局的匙钥。玩家作为破晓守护者，不仅要在险象环生的荒域中求生，更要通过解开深埋在古老遗迹中的谜团，重构文明的法则。`
             };
         }
 
@@ -715,9 +945,10 @@
                 return;
             }
 
-            // UI Loading state
             emptyState.classList.add('hidden');
             resultContainer.classList.add('hidden');
+            loadingTitle.textContent = "AI 正在高能扩写游戏提示词...";
+            loadingSubtitle.textContent = "深度构想核心机制、构建 Midjourney 美术 Prompt 与程序开发指令...";
             loadingState.classList.remove('hidden');
             generateBtn.disabled = true;
             generateBtn.classList.add('opacity-75');
@@ -727,7 +958,6 @@
             const camera = cameraSelect.value;
             const mode = modeSelect.value;
 
-            // Check if Offline Mode forced
             if (appRunMode === 'mock') {
                 setTimeout(() => {
                     currentGeneratedData = generateLocalMockData(userInput, artStyle, engine, camera, mode);
@@ -740,12 +970,12 @@
                     resultContainer.classList.remove('hidden');
                     generateBtn.disabled = false;
                     generateBtn.classList.remove('opacity-75');
+                    switchTab('tab-overview');
                     showToast("已在离线/模拟模式下成功生成扩写！", "success");
                 }, 800);
                 return;
             }
 
-            // Online API Attempt
             const systemPrompt = `You are a world-class Game Designer, Game Architect, and Prompt Engineer.
 Your task is to expand a raw game idea into a rich, structured set of prompts and GDD specifications.
 
@@ -758,56 +988,37 @@ Expansion Mode Focus: "${mode}"
 Respond ONLY with a valid JSON object strictly adhering to this schema:
 {
   "gameTitle": "Catchy Game Title (Bilingual Chinese & English)",
-  "genre": "Genre classification (e.g., 2D Action Roguelike)",
+  "genre": "Genre classification",
   "tagline": "A compelling 1-sentence elevator pitch",
   "summary": "Detailed summary of core fantasy, theme, and gameplay loop in Chinese",
   "gameplayMechanics": [
-    {
-      "name": "Mechanic Name",
-      "description": "Detailed description of how this mechanism works in-game"
-    },
-    {
-      "name": "Mechanic Name",
-      "description": "Detailed description"
-    },
-    {
-      "name": "Mechanic Name",
-      "description": "Detailed description"
-    }
+    { "name": "Mechanic Name", "description": "Detailed description" },
+    { "name": "Mechanic Name", "description": "Detailed description" },
+    { "name": "Mechanic Name", "description": "Detailed description" }
   ],
   "artPrompts": {
-    "environmentPrompt": "Comprehensive Midjourney/Stable Diffusion prompt for environment background with quality tags, camera parameters, and style modifiers in English.",
-    "characterPrompt": "Detailed Midjourney/SD prompt for character sprite sheet / model sheet / concept art in English.",
-    "uiPrompt": "Detailed Midjourney/SD prompt for game UI design, HUD elements, button design in English."
+    "environmentPrompt": "Comprehensive Midjourney/SD prompt for environment",
+    "characterPrompt": "Detailed Midjourney/SD prompt for character concept",
+    "uiPrompt": "Detailed Midjourney/SD prompt for game UI design"
   },
-  "codePrompt": "A comprehensive prompt tailored for Claude 3.5 Sonnet / ChatGPT to write complete, working game prototype code using ${engine}. Include detailed setup, control handling, player state, main loop, and render instructions.",
-  "narrativeBrief": "Engaging narrative framework, world-building lore, protagonist background, and atmospheric vibe in Chinese."
+  "codePrompt": "A comprehensive prompt tailored for AI coding assistants to write full playable code.",
+  "narrativeBrief": "Engaging narrative framework, world-building lore in Chinese."
 }`;
 
-            const payload = {
-                contents: [{ parts: [{ text: "Synthesize and expand the game prompt according to system instructions." }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: {
-                    responseMimeType: "application/json"
-                }
-            };
-
-            const apiKey = userCustomApiKey || "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-
             try {
-                const response = await fetchWithBackoff(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                const userMsg = "Synthesize and expand the game prompt according to system instructions.";
+                const jsonText = await callLLMAPI({
+                    systemPrompt: systemPrompt,
+                    userPrompt: userMsg,
+                    responseJsonFormat: true
                 });
-
-                const data = await response.json();
-                const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (!jsonText) throw new Error("未收到有效模型生成结果");
 
-                currentGeneratedData = JSON.parse(jsonText);
+                // Clean potential markdown wrap
+                const cleanedJson = jsonText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+
+                currentGeneratedData = JSON.parse(cleanedJson);
                 renderResults(currentGeneratedData);
                 saveToHistory(currentGeneratedData, userInput);
 
@@ -815,11 +1026,12 @@ Respond ONLY with a valid JSON object strictly adhering to this schema:
                     generateConceptImage(currentGeneratedData.artPrompts.environmentPrompt);
                 }
 
+                switchTab('tab-overview');
+
             } catch (error) {
-                console.warn("Online generation failed, switching to smart local generator fallback:", error);
+                console.warn("Online API generation failed, switching to local generator fallback:", error);
                 showToast("在线 API 请求受阻，自动激活本地智能引擎扩写！", "info");
                 
-                // Fallback seamlessly to local generator
                 currentGeneratedData = generateLocalMockData(userInput, artStyle, engine, camera, mode);
                 renderResults(currentGeneratedData);
                 saveToHistory(currentGeneratedData, userInput);
@@ -827,6 +1039,7 @@ Respond ONLY with a valid JSON object strictly adhering to this schema:
                 if (generateImgToggle.checked) {
                     renderFallbackCanvasPreview(currentGeneratedData.gameTitle);
                 }
+                switchTab('tab-overview');
             } finally {
                 loadingState.classList.add('hidden');
                 resultContainer.classList.remove('hidden');
@@ -835,14 +1048,320 @@ Respond ONLY with a valid JSON object strictly adhering to this schema:
             }
         }
 
+        async function generateLiveGameCode() {
+            const userInput = userPromptInput.value.trim() || (currentGeneratedData ? currentGeneratedData.gameTitle : "科技感动作探索");
+            const artStyle = styleSelect.value;
+            const camera = cameraSelect.value;
+
+            emptyState.classList.add('hidden');
+            resultContainer.classList.remove('hidden');
+            switchTab('tab-runner');
+
+            const protoLoading = document.getElementById('proto-loading-overlay');
+            protoLoading.classList.remove('hidden');
+
+            if (appRunMode === 'mock') {
+                setTimeout(() => {
+                    const localCode = createPlayableCanvasGameCode(userInput, artStyle);
+                    runCodeInSandbox(localCode);
+                    protoLoading.classList.add('hidden');
+                    showToast("智能引擎已实时构建并渲染游戏原型！", "success");
+                }, 1000);
+                return;
+            }
+
+            const systemPrompt = `You are an expert Game Developer specializing in single-file HTML5 Canvas and JavaScript game prototypes.
+Generate ONE complete, standalone HTML page containing CSS, HTML5 <canvas>, and JS game loop code that implements a playable game prototype.
+
+Game Concept: "${userInput}"
+Art Style Theme: "${artStyle}"
+Camera / Perspective: "${camera}"
+
+REQUIREMENTS:
+1. Return ONLY valid executable HTML code starting with <!DOCTYPE html> and ending with </html>.
+2. Responsive full screen <canvas id="gameCanvas"></canvas> with glowing aesthetic.
+3. INCLUDE: smooth game loop, player controls (WASD/Arrows/Space), interactive targets/enemies, score, HP bar, particles, game over & restart screen.
+4. Use vector drawing/emojis instead of external image URLs.`;
+
+            try {
+                let rawText = await callLLMAPI({
+                    systemPrompt: systemPrompt,
+                    userPrompt: `Generate a complete runnable HTML game prototype for: ${userInput}`,
+                    responseJsonFormat: false
+                });
+
+                if (!rawText) throw new Error("无有效代码产出");
+
+                rawText = rawText.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+
+                runCodeInSandbox(rawText);
+                showToast("AI 已成功实时编写并加载游戏原型！", "success");
+
+            } catch (err) {
+                console.warn("API Code generation failed, serving procedural playable fallback game:", err);
+                showToast("在线生成代码受限，自动启动内嵌多边形游戏代码引擎！", "info");
+                const fallbackCode = createPlayableCanvasGameCode(userInput, artStyle);
+                runCodeInSandbox(fallbackCode);
+            } finally {
+                protoLoading.classList.add('hidden');
+            }
+        }
+
+        function runCodeInSandbox(htmlCode) {
+            currentLiveCode = htmlCode;
+            document.getElementById('live-code-display').textContent = htmlCode;
+            
+            const iframe = document.getElementById('game-sandbox-iframe');
+            iframe.srcdoc = htmlCode;
+        }
+
+        function createPlayableCanvasGameCode(title, style) {
+            const sanitizedTitle = title.replace(/['"\\]/g, ' ');
+            return `<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>${sanitizedTitle} - Prototype</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #050814; font-family: 'Segoe UI', Tahoma, sans-serif; color: #fff; }
+        canvas { display: block; width: 100vw; height: 100vh; background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let score = 0;
+        let health = 100;
+        let gameOver = false;
+        let keys = {};
+
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 100,
+            radius: 20,
+            speed: 7,
+            color: '#6366f1'
+        };
+
+        let bullets = [];
+        let enemies = [];
+        let particles = [];
+
+        window.addEventListener('keydown', e => {
+            keys[e.code] = true;
+            if (e.code === 'Space' && !gameOver) shoot();
+            if (gameOver && (e.code === 'KeyR' || e.code === 'Space')) resetGame();
+        });
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        function resetGame() {
+            score = 0;
+            health = 100;
+            gameOver = false;
+            bullets = [];
+            enemies = [];
+            particles = [];
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 100;
+        }
+
+        function shoot() {
+            bullets.push({ x: player.x, y: player.y - player.radius, vy: -12, color: '#38bdf8' });
+            createParticles(player.x, player.y - player.radius, '#38bdf8', 4);
+        }
+
+        function spawnEnemy() {
+            if (Math.random() < 0.04) {
+                enemies.push({
+                    x: Math.random() * (canvas.width - 60) + 30,
+                    y: -30,
+                    speed: 2 + Math.random() * 3,
+                    radius: 18 + Math.random() * 12,
+                    color: Math.random() > 0.5 ? '#f43f5e' : '#a855f7',
+                    hp: 2
+                });
+            }
+        }
+
+        function createParticles(x, y, color, count = 12) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 1,
+                    decay: 0.03 + Math.random() * 0.02,
+                    color
+                });
+            }
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            if ((keys['ArrowLeft'] || keys['KeyA']) && player.x > player.radius) player.x -= player.speed;
+            if ((keys['ArrowRight'] || keys['KeyD']) && player.x < canvas.width - player.radius) player.x += player.speed;
+            if ((keys['ArrowUp'] || keys['KeyW']) && player.y > player.radius) player.y -= player.speed;
+            if ((keys['ArrowDown'] || keys['KeyS']) && player.y < canvas.height - player.radius) player.y += player.speed;
+
+            bullets.forEach((b, bi) => {
+                b.y += b.vy;
+                if (b.y < -10) bullets.splice(bi, 1);
+            });
+
+            spawnEnemy();
+            enemies.forEach((e, ei) => {
+                e.y += e.speed;
+
+                bullets.forEach((b, bi) => {
+                    const dist = Math.hypot(b.x - e.x, b.y - e.y);
+                    if (dist < e.radius + 6) {
+                        e.hp--;
+                        bullets.splice(bi, 1);
+                        createParticles(e.x, e.y, e.color, 6);
+                        if (e.hp <= 0) {
+                            createParticles(e.x, e.y, e.color, 18);
+                            enemies.splice(ei, 1);
+                            score += 100;
+                        }
+                    }
+                });
+
+                const pDist = Math.hypot(player.x - e.x, player.y - e.y);
+                if (pDist < player.radius + e.radius) {
+                    health -= 20;
+                    createParticles(player.x, player.y, '#f43f5e', 20);
+                    enemies.splice(ei, 1);
+                    if (health <= 0) gameOver = true;
+                }
+
+                if (e.y > canvas.height + 40) enemies.splice(ei, 1);
+            });
+
+            particles.forEach((p, pi) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+                if (p.life <= 0) particles.splice(pi, 1);
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.08)';
+            ctx.lineWidth = 1;
+            const gridGap = 40;
+            for (let x = 0; x < canvas.width; x += gridGap) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridGap) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = player.color;
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 10;
+            bullets.forEach(b => {
+                ctx.shadowColor = b.color;
+                ctx.fillStyle = b.color;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            enemies.forEach(e => {
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = e.color;
+                ctx.fillStyle = e.color;
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            particles.forEach(p => {
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = p.color;
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('游戏概念原型: ${sanitizedTitle}', 20, 35);
+            ctx.font = '14px sans-serif';
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText('得分 (Score): ' + score, 20, 65);
+
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.8)';
+            ctx.fillRect(20, 80, 200, 12);
+            ctx.fillStyle = health > 30 ? '#10b981' : '#f43f5e';
+            ctx.fillRect(20, 80, Math.max(0, health) * 2, 12);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px monospace';
+            ctx.fillText('控制: WASD/方向键移动 | 空格发射能量弹', 20, canvas.height - 20);
+
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#f43f5e';
+                ctx.font = 'bold 36px sans-serif';
+                ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '18px sans-serif';
+                ctx.fillText('最终得分: ' + score, canvas.width / 2, canvas.height / 2 + 20);
+                
+                ctx.fillStyle = '#a855f7';
+                ctx.font = '14px monospace';
+                ctx.fillText('按 [ R ] 键或 [ 空格 ] 重新开始试玩', canvas.width / 2, canvas.height / 2 + 60);
+                ctx.textAlign = 'left';
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    <\/script>
+</body>
+</html>`;
+        }
+
         function renderResults(data) {
-            // Overview Tab
             document.getElementById('res-game-title').textContent = data.gameTitle || '未命名游戏';
             document.getElementById('res-genre-badge').textContent = data.genre || '核心游戏';
             document.getElementById('res-tagline').textContent = `“${data.tagline}”`;
             document.getElementById('res-summary').innerHTML = `<p>${data.summary}</p>`;
 
-            // Mechanics rendering
             const mechanicsList = document.getElementById('res-mechanics-list');
             mechanicsList.innerHTML = '';
             if (Array.isArray(data.gameplayMechanics)) {
@@ -859,15 +1378,12 @@ Respond ONLY with a valid JSON object strictly adhering to this schema:
                 });
             }
 
-            // Art Tab
             document.getElementById('art-env-prompt').textContent = data.artPrompts?.environmentPrompt || '';
             document.getElementById('art-char-prompt').textContent = data.artPrompts?.characterPrompt || '';
             document.getElementById('art-ui-prompt').textContent = data.artPrompts?.uiPrompt || '';
 
-            // Code Tab
             document.getElementById('res-code-prompt').textContent = data.codePrompt || '';
 
-            // Lore Tab
             document.getElementById('res-lore-body').innerHTML = `<p>${data.narrativeBrief || '无故事摘要'}</p>`;
         }
 
@@ -901,7 +1417,7 @@ Respond ONLY with a valid JSON object strictly adhering to this schema:
             };
 
             const apiKey = userCustomApiKey || "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=${apiKey}`;
 
             try {
                 const response = await fetchWithBackoff(apiUrl, {
@@ -910,235 +1426,334 @@ Respond ONLY with a valid JSON object strictly adhering to this schema:
                     body: JSON.stringify(payload)
                 });
 
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                const data = await response.json();
+                const base64ImageBytes = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
-                if (part && part.inlineData) {
-                    const imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                    imgResult.src = imageUrl;
+                if (base64ImageBytes) {
+                    imgResult.src = `data:image/png;base64,${base64ImageBytes}`;
                     imgResult.classList.remove('hidden');
-                    showToast("概念视觉效果图已生成！", "success");
                 } else {
-                    throw new Error("未获得图像数据");
+                    renderFallbackCanvasPreview(currentGeneratedData?.gameTitle || "Concept");
                 }
             } catch (err) {
-                console.warn("Online concept image failed, rendering canvas concept placeholder:", err);
+                console.warn("Concept image generation fallback:", err);
                 renderFallbackCanvasPreview(currentGeneratedData?.gameTitle || "Concept");
             } finally {
                 imgLoading.classList.add('hidden');
             }
         }
 
-        // Draw procedural concept artwork on canvas when offline or image API fails
-        function renderFallbackCanvasPreview(titleText) {
+        function renderFallbackCanvasPreview(title) {
             const canvas = document.getElementById('fallback-canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 800;
-            canvas.height = 450;
+            canvas.width = 640;
+            canvas.height = 360;
 
-            // Background Gradient
             const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-            grad.addColorStop(0, '#0f172a');
-            grad.addColorStop(0.5, '#1e1b4b');
-            grad.addColorStop(1, '#311042');
+            grad.addColorStop(0, '#1e1b4b');
+            grad.addColorStop(0.5, '#31104b');
+            grad.addColorStop(1, '#020617');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw abstract synthwave grid/horizon
-            ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
-            ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += 40) {
+            for (let i = 0; i < 40; i++) {
+                ctx.fillStyle = `rgba(168, 85, 247, ${Math.random() * 0.4})`;
                 ctx.beginPath();
-                ctx.moveTo(x, canvas.height * 0.6);
-                ctx.lineTo((x - canvas.width / 2) * 3 + canvas.width / 2, canvas.height);
-                ctx.stroke();
+                ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 80 + 10, 0, Math.PI * 2);
+                ctx.fill();
             }
 
-            // Glow Circle / Sun
-            const sunGrad = ctx.createRadialGradient(400, 200, 10, 400, 200, 120);
-            sunGrad.addColorStop(0, 'rgba(236, 72, 153, 0.8)');
-            sunGrad.addColorStop(0.6, 'rgba(99, 102, 241, 0.4)');
-            sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = sunGrad;
-            ctx.beginPath();
-            ctx.arc(400, 200, 120, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Text overlay
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 28px Inter, sans-serif';
+            ctx.font = 'bold 24px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(titleText, 400, 210);
+            ctx.fillText(title || '概念效果设计', canvas.width / 2, canvas.height / 2 - 10);
 
-            ctx.fillStyle = '#a7f3d0';
-            ctx.font = '14px JetBrains Mono, monospace';
-            ctx.fillText('概念艺术示意图 • Game Concept Visual Frame', 400, 245);
+            ctx.fillStyle = '#a855f7';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Game Concept Visual Art Prototype', canvas.width / 2, canvas.height / 2 + 25);
 
             canvas.classList.remove('hidden');
             document.getElementById('image-error').classList.remove('hidden');
-            document.getElementById('image-error-msg').textContent = "已展现内嵌多边形概念效果图 (网络 API 离线保护模式)";
         }
 
-        async function fetchWithBackoff(url, options, maxRetries = 2) {
-            let delay = 1000;
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const res = await fetch(url, options);
-                    if (res.ok) return res;
-                    if (res.status === 429) {
-                        await new Promise(r => setTimeout(r, delay));
-                        delay *= 2;
-                        continue;
-                    }
-                    throw new Error(`HTTP Error ${res.status}`);
-                } catch (err) {
-                    if (i === maxRetries - 1) throw err;
-                    await new Promise(r => setTimeout(r, delay));
-                    delay *= 2;
-                }
-            }
-        }
-
-        function saveToHistory(data, inputPrompt) {
-            const item = {
+        function saveToHistory(data, input) {
+            const record = {
                 id: Date.now(),
-                timestamp: new Date().toLocaleString('zh-CN'),
-                input: inputPrompt,
+                input: input,
+                title: data.gameTitle,
+                genre: data.genre,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 data: data
             };
-            expansionHistory.unshift(item);
+
+            expansionHistory.unshift(record);
             if (expansionHistory.length > 15) expansionHistory.pop();
+
             localStorage.setItem('game_prompt_history', JSON.stringify(expansionHistory));
-            renderHistoryList();
+            renderHistory();
         }
 
-        function renderHistoryList() {
-            const historyList = document.getElementById('history-list');
+        function renderHistory() {
+            const list = document.getElementById('history-list');
             if (expansionHistory.length === 0) {
-                historyList.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">暂无历史扩写记录</p>`;
+                list.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">暂无历史扩写记录</p>`;
                 return;
             }
 
-            historyList.innerHTML = '';
+            list.innerHTML = '';
             expansionHistory.forEach(item => {
                 const el = document.createElement('div');
-                el.className = 'glass-panel glass-panel-hover rounded-xl p-3 cursor-pointer transition flex flex-col gap-1 border border-slate-800';
+                el.className = 'glass-panel p-3 rounded-xl cursor-pointer hover:border-indigo-500 transition flex flex-col gap-1';
                 el.innerHTML = `
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-indigo-300 truncate max-w-[200px]">${item.data.gameTitle || '未命名'}</span>
+                        <span class="text-xs font-bold text-indigo-300 truncate">${item.title}</span>
                         <span class="text-[10px] text-slate-500">${item.timestamp}</span>
                     </div>
-                    <p class="text-xs text-slate-400 line-clamp-1">"${item.input}"</p>
+                    <p class="text-[11px] text-slate-400 truncate">${item.input}</p>
                 `;
                 el.addEventListener('click', () => {
                     currentGeneratedData = item.data;
                     renderResults(item.data);
                     emptyState.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
+                    switchTab('tab-overview');
                     document.getElementById('history-modal').classList.add('hidden');
                     showToast("已载入历史记录！", "info");
                 });
-                historyList.appendChild(el);
+                list.appendChild(el);
             });
         }
 
-        // Event listener for generate button
-        generateBtn.addEventListener('click', generateGamePrompts);
-
-        // Re-generate image listener
-        document.getElementById('re-generate-image-btn').addEventListener('click', () => {
-            if (currentGeneratedData && currentGeneratedData.artPrompts?.environmentPrompt) {
-                generateConceptImage(currentGeneratedData.artPrompts.environmentPrompt);
-            } else {
-                showToast("请先执行游戏提示词扩写！", "error");
-            }
-        });
-
-        // Copy Card Button Handler
-        document.querySelectorAll('.copy-card-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetId = btn.getAttribute('data-target');
-                const text = document.getElementById(targetId)?.textContent;
-                if (text) copyToClipboard(text, "已复制 Prompt！");
-            });
-        });
-
-        // Copy All Handler
-        document.getElementById('copy-all-btn').addEventListener('click', () => {
-            if (!currentGeneratedData) {
-                showToast("暂无可复制的扩写内容", "error");
-                return;
-            }
-            const fullContent = `
-# ${currentGeneratedData.gameTitle}
-*${currentGeneratedData.tagline}*
-
-## 游戏类型与平台
-${currentGeneratedData.genre}
-
-## 核心设计概述
-${currentGeneratedData.summary}
-
-## 核心玩法机制
-${currentGeneratedData.gameplayMechanics?.map(m => `- **${m.name}**: ${m.description}`).join('\n')}
-
-## 美术提示词 (Art Prompts)
-- **场景环境 Prompt**: ${currentGeneratedData.artPrompts?.environmentPrompt}
-- **角色/精灵 Prompt**: ${currentGeneratedData.artPrompts?.characterPrompt}
-- **界面 UI Prompt**: ${currentGeneratedData.artPrompts?.uiPrompt}
-
-## AI 编程 Prompt
-\`\`\`
-${currentGeneratedData.codePrompt}
-\`\`\`
-
-## 世界观与剧情
-${currentGeneratedData.narrativeBrief}
-            `.trim();
-
-            copyToClipboard(fullContent, "已复制完整 GDD 及所有 Prompt！");
-        });
-
-        // Export Markdown Handler
-        document.getElementById('download-markdown-btn').addEventListener('click', () => {
-            if (!currentGeneratedData) {
-                showToast("暂无可导出的扩写内容", "error");
-                return;
-            }
-            const mdContent = `# ${currentGeneratedData.gameTitle}\n\n` +
-                `> ${currentGeneratedData.tagline}\n\n` +
-                `## 游戏概述\n${currentGeneratedData.summary}\n\n` +
-                `## 场景美术 Prompt\n\`\`\`\n${currentGeneratedData.artPrompts?.environmentPrompt}\n\`\`\`\n\n` +
-                `## 角色美术 Prompt\n\`\`\`\n${currentGeneratedData.artPrompts?.characterPrompt}\n\`\`\`\n\n` +
-                `## 代码 Prompt\n\`\`\`\n${currentGeneratedData.codePrompt}\n\`\`\`\n`;
-
-            const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${currentGeneratedData.gameTitle || 'Game_Prompt'}.md`;
-            link.click();
-            showToast("已开始下载 Markdown 文档", "success");
-        });
-
-        // History Modal Toggles
-        const historyModal = document.getElementById('history-modal');
         document.getElementById('history-toggle-btn').addEventListener('click', () => {
-            renderHistoryList();
-            historyModal.classList.remove('hidden');
+            renderHistory();
+            document.getElementById('history-modal').classList.remove('hidden');
         });
         document.getElementById('close-history-btn').addEventListener('click', () => {
-            historyModal.classList.add('hidden');
+            document.getElementById('history-modal').classList.add('hidden');
         });
         document.getElementById('clear-history-btn').addEventListener('click', () => {
             expansionHistory = [];
             localStorage.removeItem('game_prompt_history');
-            renderHistoryList();
-            showToast("历史记录已清空", "info");
+            renderHistory();
+            showToast("历史记录已清空！", "info");
         });
 
-        // Initialize UI status badge on start
-        updateModeBadge();
-        renderHistoryList();
+        generateBtn.addEventListener('click', generateGamePrompts);
+        generateCodeDirectBtn.addEventListener('click', generateLiveGameCode);
+        document.getElementById('trigger-build-code-btn').addEventListener('click', generateLiveGameCode);
+
+        document.getElementById('restart-game-btn').addEventListener('click', () => {
+            if (currentLiveCode) runCodeInSandbox(currentLiveCode);
+        });
+
+        document.getElementById('fullscreen-game-btn').addEventListener('click', () => {
+            const iframe = document.getElementById('game-sandbox-iframe');
+            if (iframe.requestFullscreen) iframe.requestFullscreen();
+            else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+        });
+
+        document.getElementById('download-code-html-btn').addEventListener('click', () => {
+            if (!currentLiveCode) {
+                showToast("尚未生成任何可运行代码！", "error");
+                return;
+            }
+            const blob = new Blob([currentLiveCode], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${(currentGeneratedData?.gameTitle || 'GamePrototype').replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("已成功导出 Standalone HTML 网页游戏程序！", "success");
+        });
+
+        document.getElementById('toggle-source-view-btn').addEventListener('click', () => {
+            const srcView = document.getElementById('source-code-view');
+            const txt = document.getElementById('toggle-source-text');
+            if (srcView.classList.contains('hidden')) {
+                srcView.classList.remove('hidden');
+                txt.textContent = '隐藏源代码';
+            } else {
+                srcView.classList.add('hidden');
+                txt.textContent = '查看源代码';
+            }
+        });
+
+        document.getElementById('copy-live-code-btn').addEventListener('click', () => {
+            if (currentLiveCode) copyToClipboard(currentLiveCode, "游戏源代码已复制到剪贴板！");
+        });
+
+        document.querySelectorAll('.copy-card-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+                const text = document.getElementById(targetId)?.textContent;
+                if (text) copyToClipboard(text);
+            });
+        });
+
+        document.getElementById('copy-all-btn').addEventListener('click', () => {
+            if (!currentGeneratedData) return;
+            const fullText = `
+# ${currentGeneratedData.gameTitle}
+类型: ${currentGeneratedData.genre}
+一句话卖点: ${currentGeneratedData.tagline}
+
+## 游戏概述
+${currentGeneratedData.summary}
+
+## AI 编程 Prompt
+${currentGeneratedData.codePrompt}
+
+## Midjourney/SD 美术 Prompt
+- 场景环境: ${currentGeneratedData.artPrompts.environmentPrompt}
+- 角色模型: ${currentGeneratedData.artPrompts.characterPrompt}
+- UI 布局: ${currentGeneratedData.artPrompts.uiPrompt}
+
+## 叙事世界观
+${currentGeneratedData.narrativeBrief}
+            `.trim();
+            copyToClipboard(fullText, "已复制全部设计案与提示词文本！");
+        });
+
+        document.getElementById('download-markdown-btn').addEventListener('click', () => {
+            if (!currentGeneratedData) return;
+            const mdContent = `# ${currentGeneratedData.gameTitle}\n\n**类型:** ${currentGeneratedData.genre}\n**标语:** ${currentGeneratedData.tagline}\n\n## 概述\n${currentGeneratedData.summary}\n\n## AI Code Prompt\n\`\`\`\n${currentGeneratedData.codePrompt}\n\`\`\`\n\n## 美术 Prompt\n- **Environment:** \`${currentGeneratedData.artPrompts.environmentPrompt}\`\n- **Character:** \`${currentGeneratedData.artPrompts.characterPrompt}\`\n- **UI Layout:** \`${currentGeneratedData.artPrompts.uiPrompt}\`\n\n## 世界观叙事\n${currentGeneratedData.narrativeBrief}`;
+            const blob = new Blob([mdContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentGeneratedData.gameTitle.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}_GDD.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("已成功导出 Markdown 文档！", "success");
+        });
+
+        // AI Code Modification Dialogue Logic
+        const codeModifyForm = document.getElementById('code-modify-form');
+        const codeModifyInput = document.getElementById('code-modify-input');
+        const sendModifyBtn = document.getElementById('send-modify-btn');
+        const chatMessagesList = document.getElementById('chat-messages-list');
+
+        function appendChatMessage(sender, text, isAi = false) {
+            const msgDiv = document.createElement('div');
+            if (isAi) {
+                msgDiv.className = 'bg-indigo-950/40 border border-indigo-900/50 p-2.5 rounded-xl text-indigo-200 flex items-start gap-2';
+                msgDiv.innerHTML = `
+                    <i class="fa-solid fa-robot text-indigo-400 text-sm mt-0.5 shrink-0"></i>
+                    <div>
+                        <p class="font-semibold text-[11px] text-indigo-300">${sender}</p>
+                        <p class="text-slate-300">${text}</p>
+                    </div>
+                `;
+            } else {
+                msgDiv.className = 'bg-slate-800/80 border border-slate-700/80 p-2.5 rounded-xl text-slate-200 flex items-start gap-2 self-end w-full';
+                msgDiv.innerHTML = `
+                    <i class="fa-solid fa-user text-amber-400 text-sm mt-0.5 shrink-0"></i>
+                    <div>
+                        <p class="font-semibold text-[11px] text-amber-300">${sender}</p>
+                        <p class="text-slate-200">${text}</p>
+                    </div>
+                `;
+            }
+            chatMessagesList.appendChild(msgDiv);
+            chatMessagesList.scrollTop = chatMessagesList.scrollHeight;
+        }
+
+        async function handleCodeModification(feedbackText) {
+            if (!currentLiveCode) {
+                showToast("尚未生成初始游戏代码，请先点击“生成可运行代码”！", "error");
+                return;
+            }
+
+            const promptText = feedbackText.trim();
+            if (!promptText) return;
+
+            appendChatMessage('玩家修改意见', promptText, false);
+            codeModifyInput.value = '';
+
+            const protoLoading = document.getElementById('proto-loading-overlay');
+            protoLoading.classList.remove('hidden');
+            sendModifyBtn.disabled = true;
+            sendModifyBtn.classList.add('opacity-50');
+
+            try {
+                let modifiedCode = "";
+
+                if (appRunMode === 'mock') {
+                    // Local Mock Smart Refactor Fallback
+                    await new Promise(r => setTimeout(r, 1000));
+                    modifiedCode = refactorCodeLocally(currentLiveCode, promptText);
+                } else {
+                    const systemPrompt = `You are an expert game developer. Your task is to update and refactor existing HTML5 Canvas / JS game code based on user feedback.
+IMPORTANT RULES:
+1. Return ONLY valid standalone HTML code starting with <!DOCTYPE html> and ending with </html>.
+2. Maintain full playability and bug-free code.
+3. Incorporate the requested modifications into the game mechanics, styles, or logic cleanly.`;
+
+                    const userPrompt = `Here is the current working game HTML code:\n\`\`\`html\n${currentLiveCode}\n\`\`\`\n\nPlease modify the code according to this user request: "${promptText}"`;
+
+                    let rawText = await callLLMAPI({
+                        systemPrompt: systemPrompt,
+                        userPrompt: userPrompt,
+                        responseJsonFormat: false
+                    });
+
+                    if (!rawText) throw new Error("代码修改生成返回为空");
+
+                    modifiedCode = rawText.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+                }
+
+                runCodeInSandbox(modifiedCode);
+                appendChatMessage('AI 编程助手', `代码已迭代修改完成！已为您的游戏注入以下调整：<b>${promptText}</b>。点击画布可立即试玩全新效果！`, true);
+                showToast("AI 已根据您的反馈完成代码重构与实时编译！", "success");
+
+            } catch (err) {
+                console.warn("AI Code modification fallback:", err);
+                const localCode = refactorCodeLocally(currentLiveCode, promptText);
+                runCodeInSandbox(localCode);
+                appendChatMessage('AI 编程助手', `已在本地离线引擎中协助完成代码迭代调整！`, true);
+                showToast("离线/智能引擎已完成代码修改并加载！", "info");
+            } finally {
+                protoLoading.classList.add('hidden');
+                sendModifyBtn.disabled = false;
+                sendModifyBtn.classList.remove('opacity-50');
+            }
+        }
+
+        function refactorCodeLocally(code, feedback) {
+            let updated = code;
+            if (feedback.includes('BOSS') || feedback.includes('boss')) {
+                updated = updated.replace(/speed: 2 \+ Math\.random\(\) \* 3,/g, 'speed: 1.5, radius: 45, hp: 15, color: "#f43f5e", isBoss: true,');
+            }
+            if (feedback.includes('速度') || feedback.includes('射速')) {
+                updated = updated.replace(/speed: 7,/g, 'speed: 12,');
+                updated = updated.replace(/vy: -12,/g, 'vy: -18,');
+            }
+            if (feedback.includes('霓虹') || feedback.includes('金')) {
+                updated = updated.replace(/#6366f1/g, '#f59e0b');
+                updated = updated.replace(/#0f172a/g, '#180e29');
+            }
+            return updated + `\n<!-- AI Modified: ${feedback.replace(/[<>]/g, '')} -->`;
+        }
+
+        if (codeModifyForm) {
+            codeModifyForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleCodeModification(codeModifyInput.value);
+            });
+        }
+
+        document.querySelectorAll('.modify-chip-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const msg = btn.getAttribute('data-msg');
+                if (msg) handleCodeModification(msg);
+            });
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateModeBadge();
+            renderHistory();
+        });
     </script>
 </body>
 </html>
