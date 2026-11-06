@@ -9,7 +9,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1115;--card:#171a21;--tx:#e8eaee;--mu:#98a2b3;--bd:#2a2f3a;--ac:#5b8cff;--u:#1d2a4a;--a:#20242d}}
 *{box-sizing:border-box}html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;justify-content:center}
-main{width:100%;max-width:860px;padding:14px;display:flex;flex-direction:column;gap:10px;height:100%}
+main{width:100%;max-width:1280px;padding:14px;display:flex;flex-direction:column;gap:10px;height:100%}
 h1{font-size:18px;margin:0}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -22,45 +22,60 @@ button{cursor:pointer}button.p{background:var(--ac);border-color:var(--ac);color
 #log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:10px}
 .m{padding:8px 12px;border-radius:10px;white-space:pre-wrap;word-break:break-word;max-width:92%}
 .m.user{background:var(--u);align-self:flex-end}.m.assistant{background:var(--a);align-self:flex-start}
-.tw{max-height:260px;overflow:auto;border:1px solid var(--bd);border-radius:8px;margin-top:8px}
+.tw{flex:1 1 180px;min-height:140px;overflow:auto;border:1px solid var(--bd);border-radius:8px;margin-top:8px}
 table{width:100%;border-collapse:collapse;font-size:13px}th{position:sticky;top:0;background:var(--card);text-align:left;color:var(--mu);font-weight:500}
 th,td{padding:6px 10px;border-bottom:1px solid var(--bd)}tbody tr{cursor:pointer}tbody tr:hover{background:var(--a)}tbody tr.sel{background:var(--u);font-weight:600}
 #in{flex:1;resize:none;min-height:44px;max-height:140px}
+.app{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:10px}
+.side{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto}
+.side select,.side input[type=text],.side input:not([type]){width:100%}
+.chat{display:flex;flex-direction:column;gap:8px;min-height:0}
+.chat #log{flex:1;min-height:0}
+@media (max-width:820px){
+  main{height:auto;min-height:100%}
+  .app{grid-template-columns:1fr;flex:none}
+  .side{overflow:visible}.tw{flex:none;max-height:240px}
+  .chat{min-height:420px}
+}
 </style>
 </head>
 <body>
 <main>
   <h1>浏览器本地 AI <small style="color:var(--mu);font-weight:400">模型直接下载到你的浏览器运行，不经过任何服务器</small></h1>
-  <div class="card">
-    <div class="row">
-      <div><label>引擎</label><br>
+  <div class="app">
+    <aside class="card side">
+      <div><label>引擎</label>
         <select id="eng">
           <option value="webllm">WebLLM（WebGPU，聊天首选）</option>
           <option value="tjs">Transformers.js（ONNX，GPU/CPU 回退）</option>
         </select></div>
-      <div class="grow"><label>搜索模型</label><br><input id="q" style="width:100%" placeholder="如 qwen / llama / gemma"></div>
-      <div id="hfRow" style="display:none"><label>&nbsp;</label><br><button id="hfs">联网搜索 HF</button></div>
-    </div>
-    <div class="tw"><table><thead><tr><th>模型（点击一行选中）</th><th>信息</th></tr></thead><tbody id="tb"></tbody></table></div>
-    <div id="cnt" style="font-size:12px;color:var(--mu);margin-top:4px"></div>
-    <div class="row" id="customRow" style="margin-top:8px;display:none">
-      <div class="grow"><label>自定义 Hugging Face 模型 ID（需为 ONNX 格式，留空则用上方选择）</label><br>
-        <input id="custom" style="width:100%" placeholder="onnx-community/xxx"></div>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <button class="p" id="load">下载并加载</button>
-      <button id="unload" disabled>卸载</button>
+      <div><label>搜索模型</label>
+        <div class="row" style="flex-wrap:nowrap">
+          <input id="q" style="flex:1" placeholder="如 qwen / llama / gemma">
+          <span id="hfRow" style="display:none"><button id="hfs">联网搜索 HF</button></span>
+        </div></div>
+      <div class="tw"><table><thead><tr><th>模型（点击一行选中）</th><th>信息</th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div id="cnt" style="font-size:12px;color:var(--mu)"></div>
+      <div id="customRow" style="display:none"><label>自定义 Hugging Face 模型 ID（需为 ONNX 格式，留空则用上方选择）</label>
+        <input id="custom" placeholder="onnx-community/xxx"></div>
       <label><input type="checkbox" id="mir"> 使用 HF 镜像（hf-mirror.com，国内推荐）</label>
-      <span id="pick" style="font-size:12px"></span>
-      <span id="env" style="font-size:12px;color:var(--mu)"></span>
-    </div>
-    <div class="bar"><i id="bar"></i></div><div id="st">未加载模型</div>
-    <details id="dg" style="display:none;margin-top:6px"><summary style="cursor:pointer;font-size:12px">诊断信息（失败时点开，全选复制）</summary><pre id="dgp" style="white-space:pre-wrap;user-select:all;font-size:12px;margin:6px 0 0"></pre></details>
-  </div>
-  <div class="card" id="log"></div>
-  <div class="row">
-    <textarea id="in" placeholder="先加载模型，再输入内容（Enter 发送，Shift+Enter 换行）" disabled></textarea>
-    <button class="p" id="send" disabled>发送</button><button id="stop" disabled>停止</button><button id="clr">清空</button>
+      <div class="row">
+        <button class="p" id="load" style="flex:1">下载并加载</button>
+        <button id="unload" disabled>卸载</button>
+      </div>
+      <div id="pick" style="font-size:12px;word-break:break-all"></div>
+      <div class="bar" style="margin-top:0"><i id="bar"></i></div>
+      <div id="st" style="margin-top:0">未加载模型</div>
+      <details id="dg" style="display:none"><summary style="cursor:pointer;font-size:12px">诊断信息（失败时点开，全选复制）</summary><pre id="dgp" style="white-space:pre-wrap;user-select:all;font-size:12px;margin:6px 0 0"></pre></details>
+      <div id="env" style="font-size:12px;color:var(--mu)"></div>
+    </aside>
+    <section class="chat">
+      <div class="card" id="log"></div>
+      <div class="row" style="flex-wrap:nowrap">
+        <textarea id="in" placeholder="先加载模型，再输入内容（Enter 发送，Shift+Enter 换行）" disabled></textarea>
+        <button class="p" id="send" disabled>发送</button><button id="stop" disabled>停止</button><button id="clr">清空</button>
+      </div>
+    </section>
   </div>
 </main>
 
