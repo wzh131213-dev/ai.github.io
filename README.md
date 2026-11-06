@@ -102,6 +102,4 @@ python -m http.server 8000
 - [Transformers.js](https://github.com/huggingface/transformers.js)（Hugging Face）
 - [hf-mirror](https://hf-mirror.com)（Hugging Face 社区镜像）
 
-## 许可
-
-请在此处补充你选择的开源许可（如 MIT）。各引擎库与模型各自遵循其原有许可，使用具体模型前请阅读其模型卡中的许可条款。
+## Claude Sonnet 5.5 制作
