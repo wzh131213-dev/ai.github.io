@@ -202,7 +202,54 @@ function explainError(e, ctx) {
   return T("other", "");
 }
 function safeJson(o) { try { return JSON.stringify(o); } catch (_) { return String(o); } }
-globalThis.__lib = { describeThrown, probeEnv, envSummary, modelCompat, dtypeChain, explainError, fmtNum, parseHfModels, importFirst, mirrorConfig, filterModels, resolveModelId, pickDevice, clamp01, buildMessages, TJS_MODELS };
+const PREF_GPU = ["q4f16", "q4", "fp16", "q8", "int8", "uint8", "bnb4", "fp32"];
+const PREF_CPU = ["q8", "int8", "uint8", "q4", "bnb4", "fp32"];
+const SUFFIX = { "": "fp32", fp16: "fp16", q4: "q4", q4f16: "q4f16", quantized: "q8", int8: "int8", uint8: "uint8", bnb4: "bnb4" };
+function onnxDtypes(siblings) {
+  const g = {};
+  for (const f of Array.isArray(siblings) ? siblings : []) {
+    const m = f && typeof f.rfilename === "string" && f.rfilename.match(/^onnx\/model(?:_([a-z0-9]+))?\.onnx(_data(?:_\d+)?)?$/);
+    if (!m) continue;
+    const dt = SUFFIX[m[1] || ""]; if (!dt) continue;
+    const e = g[dt] = g[dt] || { dtype: dt, size: 0, hasModel: false };
+    e.size += Number(f.size) || 0; if (!m[2]) e.hasModel = true;
+  }
+  return Object.values(g).filter(e => e.hasModel);
+}
+function buildChain(hasGpu, f16, avail) {
+  if (!avail || !avail.length) return dtypeChain(hasGpu);
+  const has = new Set(avail.map(a => a.dtype)), chain = [];
+  if (hasGpu) for (const d of PREF_GPU) if (has.has(d) && (f16 !== false || !/f16/.test(d))) chain.push({ device: "webgpu", dtype: d });
+  for (const d of PREF_CPU) if (has.has(d)) chain.push({ device: "wasm", dtype: d });
+  return chain;
+}
+function sizeLimitMB(env) { return env && env.ios ? 1800 : 8000; }
+function fitChain(chain, avail, limitMB) {
+  const sz = d => ((avail || []).find(a => a.dtype === d) || {}).size || 0;
+  const ok = chain.filter(c => !sz(c.dtype) || sz(c.dtype) / 1048576 <= limitMB);
+  const mins = chain.map(c => sz(c.dtype)).filter(Boolean);
+  return { chain: ok, minMB: mins.length ? Math.min(...mins) / 1048576 : 0 };
+}
+async function checkOnnxRepo(id, host, f = (...a) => fetch(...a)) {
+  let t = null;
+  try {
+    const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    if (ctl) t = setTimeout(() => ctl.abort(), 12000);
+    const r = await f(host + "/api/models/" + id + "?blobs=true", ctl ? { signal: ctl.signal } : undefined);
+    if (r.status === 404 || r.status === 401 || r.status === 403) return { status: "missing", http: r.status };
+    if (!r.ok) return { status: "unknown" };
+    const j = await r.json(), avail = onnxDtypes(j && j.siblings);
+    return avail.length ? { status: "ok", avail } : { status: "noonnx" };
+  } catch (_) { return { status: "unknown" }; } finally { if (t) clearTimeout(t); }
+}
+async function suggestOnnx(id, host, f = (...a) => fetch(...a)) {
+  try {
+    const base = String(id).split("/")[1].split(/[-_.]/)[0];
+    const r = await f(host + "/api/models?library=transformers.js&pipeline_tag=text-generation&sort=downloads&direction=-1&limit=20&search=" + encodeURIComponent(base));
+    return r.ok ? parseHfModels(await r.json()) : [];
+  } catch (_) { return []; }
+}
+globalThis.__lib = { onnxDtypes, buildChain, fitChain, sizeLimitMB, checkOnnxRepo, suggestOnnx, describeThrown, probeEnv, envSummary, modelCompat, dtypeChain, explainError, fmtNum, parseHfModels, importFirst, mirrorConfig, filterModels, resolveModelId, pickDevice, clamp01, buildMessages, TJS_MODELS };
 
 // ===== 界面与引擎 =====
 if (typeof document !== "undefined") {
@@ -312,8 +359,32 @@ if (typeof document !== "undefined") {
       } else {
         S.tjs = await getLib("transformers.js", TJS_URLS);
         try { S.tjs.env.remoteHost = ($("mir").checked ? MIRROR : "https://huggingface.co") + "/"; } catch (_) {}
+        const host = $("mir").checked ? MIRROR : "https://huggingface.co";
+        status("检查模型仓库…");
+        const info = await checkOnnxRepo(id, host);
+        let chain = dtypeChain(hasGpu);
+        if (info.status === "noonnx" || info.status === "missing") {
+          const sug = info.status === "noonnx" ? await suggestOnnx(id, host) : [];
+          if (sug.length) { S.models = sug; S.remoteQ = $("q").value.trim(); $("custom").value = ""; fillSelect(); }
+          const err = new Error(info.status === "noonnx" ? "「" + id + "」不是浏览器可用的 ONNX 模型（仓库里没有 onnx/ 目录）。" : "找不到仓库「" + id + "」（HTTP " + info.http + "，可能不存在或需要登录授权）。");
+          err.hint = info.status === "noonnx"
+            ? "原版 PyTorch 模型无法直接在浏览器运行。请改选 ONNX 版本（通常在 onnx-community 下）" + (sug.length ? "：已在表格里列出相似模型，点选后再点加载。" : "，可点「联网搜索 HF」查找。")
+            : "请检查模型 ID 拼写。";
+          throw err;
+        }
+        if (info.status === "ok") {
+          const f16 = !(S.env && S.env.adapter) || S.env.f16;
+          const built = buildChain(hasGpu, f16, info.avail), lim = sizeLimitMB(S.env), fit = fitChain(built, info.avail, lim);
+          if (!fit.chain.length) {
+            const err = new Error(built.length ? "该模型最小的版本也要约 " + (fit.minMB / 1024).toFixed(1) + " GB，超过本设备的内存上限（约 " + (lim / 1024).toFixed(1) + " GB）。"
+              : "该模型没有适合本设备的量化版本（仅有：" + info.avail.map(a => a.dtype).join("、") + "）。");
+            err.hint = "请换一个更小的模型（0.5B–1.5B 参数）。";
+            throw err;
+          }
+          chain = fit.chain;
+        }
         let lastErr = null;
-        for (const c of dtypeChain(hasGpu)) {
+        for (const c of chain) {
           try {
             status("尝试 " + c.device + " / " + c.dtype + " …");
             S.pipe = await S.tjs.pipeline("text-generation", id, {
@@ -327,7 +398,7 @@ if (typeof document !== "undefined") {
       }
       S.kind = kind; bar(1); status("已加载：" + id + used, "ok"); $("dg").style.display = "none"; ui(true); $("in").focus();
     } catch (e) {
-      const x = explainError(e, S.env); S.kind = S.eng = S.pipe = null; bar(0);
+      const x = explainError(e, S.env); if (e && e.hint) x.hint = e.hint; S.kind = S.eng = S.pipe = null; bar(0);
       status("加载失败：" + x.msg + (x.hint ? "\n💡 " + x.hint : ""), "er"); diag(e, id, kind); ui(false);
     }
     S.busy = false; $("load").disabled = false;
