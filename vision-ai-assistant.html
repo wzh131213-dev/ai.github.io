@@ -181,6 +181,7 @@
   </div>
   <div class="header-controls">
     <select id="modelSelect" title="选择模型"></select>
+    <input type="text" id="customModel" placeholder="自定义模型ID（可选）" style="padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);font-size:13px;width:210px;max-width:42vw" title="手动输入 MLC 模型 ID，填写后将覆盖下拉选择">
     <button id="loadBtn" class="btn btn-primary"><i data-lucide="download-cloud" style="width:16px;height:16px"></i><span>加载模型</span></button>
     <span id="statusDot" class="status-dot"><span class="dot"></span><span id="statusText">未加载</span></span>
     <button id="clearBtn" class="btn btn-ghost" title="清空对话"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
@@ -398,8 +399,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
         items.push({id, vision, note: vision ? "视觉模型" : "纯文本模型"});
       });
     }catch(e){ /* 忽略，用硬编码 */ }
-    // 合并硬编码（去重）
-    HARDCODED_MODELS.forEach(m=>{ if(!seen.has(m.id)){ seen.add(m.id); items.push(m); } });
+    // 仅使用运行时 prebuiltAppConfig 中的模型，保证每个选项都有对应的 model record，避免 "Cannot find model record" 错误
     // 视觉模型排前面
     items.sort((a,b)=>(b.vision?1:0)-(a.vision?1:0));
     modelSelect.innerHTML = "";
@@ -414,11 +414,14 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     });
     modelSelect.appendChild(optGroupV);
     modelSelect.appendChild(optGroupT);
-    // 默认选 Moondream2（接近 1.5B 且支持视觉）
-    const preferred = ["Moondream2-q4f16_1-MLC","SmolVLM2-500M-Instruct-q4f16_1-MLC","SmolVLM2-256M-Instruct-q4f16_1-MLC"];
-    for(const p of preferred){
-      const o = [...modelSelect.options].find(o=>o.value===p);
-      if(o){ modelSelect.value = p; break; }
+    // 默认选第一个支持视觉的模型（可看摄像头/屏幕），否则选列表第一个
+    if(items.length === 0){
+      const opt = document.createElement("option");
+      opt.value = ""; opt.textContent = "未能获取模型列表，请在右侧输入自定义模型ID";
+      modelSelect.appendChild(opt);
+    }else{
+      const firstVision = items.find(m=>m.vision);
+      modelSelect.value = firstVision ? firstVision.id : items[0].id;
     }
   }
   fillModelSelect();
@@ -433,8 +436,9 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
   // ---------- 加载模型 ----------
   loadBtn.addEventListener("click", async ()=>{
     if(state==="loading" || state==="generating") return;
-    const modelId = modelSelect.value;
-    if(!modelId){ toast("请选择模型", true); return; }
+    const customId = $("customModel").value.trim();
+    const modelId = customId || modelSelect.value;
+    if(!modelId){ toast("请从下拉选择模型或输入自定义模型ID", true); return; }
     currentModelVision = isVisionModel(modelId);
     if(!currentModelVision){
       const ok = await confirmModal("使用纯文本模型？", "你选择的模型不支持视觉理解，将无法看懂摄像头和屏幕画面。建议选择「支持视觉」分组中的模型。仍要继续加载吗？");
@@ -452,8 +456,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
             const pct = Math.min(100, Math.round(p*100));
             progressFill.style.width = pct + "%"; progressPct.textContent = pct + "%";
           }
-        },
-        appConfig: { ...(webllm.prebuiltAppConfig||{}), cacheBackend: "cache" }
+        }
       });
       currentModelId = modelId;
       state = "ready"; syncUI();
@@ -462,7 +465,12 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     }catch(err){
       console.error(err);
       state = "idle"; syncUI();
-      toast("模型加载失败：" + (err && err.message ? err.message.slice(0,80) : String(err)), true);
+      const emsg = err && err.message ? err.message : String(err);
+      if(emsg.indexOf("model record") >= 0){
+        toast("模型ID不存在：" + modelId + "。请改从下拉列表选择（下拉里均为当前版本支持的模型），或核对自定义ID拼写", true);
+      }else{
+        toast("模型加载失败：" + emsg.slice(0,80), true);
+      }
     }
   });
 
