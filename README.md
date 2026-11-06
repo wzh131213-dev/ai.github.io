@@ -1,4 +1,4 @@
-# 浏览器本地 AI（多引擎 · 多模型）
+ # 浏览器本地 AI（多引擎 · 多模型）
 
 一个**单文件**网页（`index.html`），把主流的浏览器端 AI 引擎合并在一起：选择引擎和模型，点一下就从网络下载模型到你的浏览器里运行。没有后端服务器，没有 API Key，对话内容不会离开你的设备。
 
@@ -6,6 +6,7 @@
 
 ## 功能
 
+- **左右分栏布局**：左边选引擎、选模型、下载加载，右边是对话框；屏幕较窄（手机、iPad 竖屏）时自动改为上下排列。
 - **两个引擎，一个页面**
   - **WebLLM**：基于 WebGPU，专为聊天优化，直接使用库自带的完整预编译模型列表（Llama、Qwen、Gemma、Phi、SmolLM 等，数量随库版本变化）。
   - **Transformers.js**：基于 ONNX Runtime Web，优先 WebGPU，没有 GPU 时自动退到 WebAssembly（CPU）。
@@ -16,7 +17,9 @@
 - **HF 镜像开关**：勾选后改用 `hf-mirror.com`，方便直连 huggingface.co 困难的网络环境。
 - **自动容错**
   - 引擎库从多个 CDN、多个版本依次尝试加载，失败时列出每个地址的错误。
-  - Transformers.js 自动依次尝试 `webgpu/q4f16 → webgpu/q4 → webgpu/fp16 → wasm/q8 → wasm/q4`。
+  - **加载前预检 Hugging Face 仓库**（Transformers.js）：先查仓库里真实存在的 ONNX 文件，只尝试确实存在的量化版本；仓库没有 ONNX 文件（如原版 PyTorch 模型）时直接提示，并在表格里列出相似的 ONNX 模型供你点选。
+  - **体积保护**：模型最小的版本超过设备内存上限（iPad/iPhone 约 1.8 GB，其它设备约 8 GB）时直接提示，不再让标签页崩溃。
+  - 预检失败（如网络问题）时不阻断，退回到依次尝试 `webgpu/q4f16 → webgpu/q4 → webgpu/fp16 → wasm/q8 → wasm/q4`。
   - 缓存 API 不可用时，WebLLM 自动改用 IndexedDB 缓存。
   - 启动时检测环境（协议、存储、WebGPU、是否支持 f16），并把不兼容的模型标注 ⚠ 排到后面。
 - **诊断面板**：加载失败时显示原因、对策和一段可复制的诊断信息。
@@ -43,11 +46,11 @@ python -m http.server 8000
 
 ## 使用方法
 
-1. 选择**引擎**。
+1. 在左侧选择**引擎**。
 2. 在表格里选一个**模型**（可用搜索框过滤；Transformers.js 下还可以点「联网搜索 HF」）。
 3. 如果直连 Hugging Face 很慢或失败，勾选「使用 HF 镜像」。
 4. 点「下载并加载」，等待进度条走完。
-5. 在底部输入框提问，Enter 发送，Shift+Enter 换行。
+5. 在右侧对话框底部的输入框提问，Enter 发送，Shift+Enter 换行。
 
 建议第一次先选小模型（约 0.4B–1B 参数）验证流程，再尝试更大的。
 
@@ -72,9 +75,12 @@ python -m http.server 8000
 | 协议是 `file:` 或 `about:` | 改用 GitHub Pages 或 `http://localhost` 打开 |
 | 内存 / 显存不足（有时只显示一个数字） | 换更小的模型，关闭其它占内存的标签页 |
 | 网络错误 / Failed to fetch | 勾选「HF 镜像」；WebLLM 还需访问 GitHub raw，必要时使用代理 |
-| 404 / Could not locate file | 该仓库没有浏览器可用的 ONNX 文件，换一个模型 |
+| 404 / Could not locate file / 提示“不是浏览器可用的 ONNX 模型” | 该仓库没有 ONNX 文件，换一个模型（见下方说明） |
+| 提示“超过本设备的内存上限” | 换更小的模型（0.5B–1.5B 参数） |
 | WebGPU 适配器获取失败 | 使用最新版 Chrome / Edge，或改用 Transformers.js |
 | 模型被标 ⚠ | 设备不支持 `shader-f16`，或在 iPad/iPhone 上显存需求偏高，建议选 `q4f32` 的小模型 |
+
+**为什么填了 `Qwen/Qwen3-14B` 之类的模型 ID 加载不了？** Transformers.js 只能运行 ONNX 格式的模型，原版仓库里通常只有 PyTorch / safetensors 权重，没有 `onnx/` 目录；而且 14B 级别的模型对浏览器来说也太大。请改用 `onnx-community` 等账号下的 ONNX 版本，规模建议在 0.5B–1.5B。WebLLM 引擎的列表里也自带 Qwen3 等系列的预编译模型，搜 `qwen3` 即可。
 
 **为什么 WebLLM 的模型不能随便搜？** WebLLM 只能运行 MLC 团队预编译好的模型，所以直接使用库内置的列表。想用更多模型，请用 Transformers.js 引擎。
 
@@ -100,6 +106,5 @@ python -m http.server 8000
 
 - [WebLLM](https://github.com/mlc-ai/web-llm)（MLC AI）
 - [Transformers.js](https://github.com/huggingface/transformers.js)（Hugging Face）
-- [hf-mirror](https://hf-mirror.com)（Hugging Face 社区镜像）
-
+- [hf-mirror](https://hf-mirror.com)（Hugging Face 社区镜象
 ## Claude Sonnet 5.5 制作
