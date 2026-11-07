@@ -198,11 +198,10 @@
     <div id="messages">
       <div class="welcome" id="welcomeCard">
         <h2 class="font-display">你好，我是本地 AI 助手</h2>
-        <p>选择一个模型并点击「加载模型」，首次使用会联网下载权重（约 0.3~2 GB，之后浏览器缓存可离线使用）。支持视觉的模型可以看懂摄像头画面和屏幕截图。</p>
+        <p>选择一个模型并点击「加载模型」，首次使用会联网下载权重（约 0.3~2 GB，之后浏览器缓存可离线使用）。支持视觉的模型可以看懂上传的图片和摄像头画面。</p>
         <div class="feature-chips">
           <span class="chip"><i data-lucide="message-square" style="width:13px;height:13px"></i>本地文本对话</span>
           <span class="chip"><i data-lucide="camera" style="width:13px;height:13px"></i>摄像头读图</span>
-          <span class="chip"><i data-lucide="monitor" style="width:13px;height:13px"></i>屏幕共享分析</span>
           <span class="chip warn"><i data-lucide="shield-check" style="width:13px;height:13px"></i>数据不出浏览器</span>
         </div>
       </div>
@@ -211,7 +210,6 @@
     <div id="inputArea">
       <div id="attachBar">
         <button class="icon-btn" id="camBtn" title="开启摄像头"><i data-lucide="camera"></i></button>
-        <button class="icon-btn" id="screenBtn" title="共享屏幕"><i data-lucide="monitor-smartphone"></i></button>
         <button class="icon-btn" id="uploadBtn" title="上传图片"><i data-lucide="image-plus"></i></button>
         <input type="file" id="fileInput" accept="image/*" hidden>
         <span style="flex:1"></span>
@@ -232,7 +230,7 @@
       <video id="previewVideo" autoplay playsinline muted></video>
       <div class="preview-placeholder" id="previewPlaceholder">
         <i data-lucide="video-off"></i>
-        <div>点击上方摄像头或屏幕按钮<br>开启实时画面预览</div>
+        <div>点击上方摄像头按钮<br>开启实时画面预览</div>
       </div>
     </div>
     <div class="media-actions">
@@ -257,7 +255,14 @@
     </div>
 
     <div class="info-note">
-      <strong>使用说明：</strong>模型权重从 HuggingFace 下载并缓存到浏览器，第二次打开无需重新下载。摄像头与屏幕共享权限由浏览器弹窗授权，所有画面仅在本地处理，不会上传。
+      <strong>使用说明：</strong>模型权重从 HuggingFace 下载并缓存到浏览器，第二次打开无需重新下载。摄像头权限由浏览器弹窗授权，所有画面仅在本地处理，不会上传。为节省内存，本页面已移除屏幕共享功能（共享屏幕会使内存占用飙升）。
+    </div>
+
+    <div class="info-note">
+      <strong>运行环境要求：</strong>
+      <br>• 需要桌面版 Chrome / Edge 113+ 且开启硬件加速（要 WebGPU）
+      <br>• 若提示「WebAssembly … unsafe-eval / wasm-unsafe-eval」，说明当前打开方式的 CSP 禁止 WebAssembly：请把文件保存到电脑后直接打开，或在文件所在目录执行 <code>python3 -m http.server 8000</code>，再访问 <code>http://localhost:8000/vision-ai-assistant.html</code>
+      <br>• 应用内预览窗口、App 内置浏览器、企业策略管控的浏览器都会拦截 WebAssembly
     </div>
   </aside>
 </main>
@@ -300,6 +305,13 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     { id:"Phi-3.5-mini-instruct-q4f16_1-MLC",  vision:false, note:"3.8B · 纯文本较强" },
   ];
   const VISION_KEYWORDS = ["moondream","smolvlm","vl","vision","llava","gemma-3"];
+  // ---------- 已移除的模型（占用内存过大，禁止出现在列表 / 禁止加载） ----------
+  // Phi-3.5-vision 系列运行时会吃满内存（实测可达 64 GB 级别），已从本页面彻底移除。
+  const BLOCKED_MODEL_PATTERNS = [/phi-?3\.5[-_]?vision/i, /phi3\.5[-_]?vision/i];
+  function isBlockedModel(id){
+    if(!id) return false;
+    return BLOCKED_MODEL_PATTERNS.some(re=>re.test(id));
+  }
 
   // ---------- DOM ----------
   const $ = id => document.getElementById(id);
@@ -308,7 +320,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
   const progressPanel = $("progressPanel"), progressText = $("progressText"), progressPct = $("progressPct"), progressFill = $("progressFill");
   const messagesEl = $("messages"), welcomeCard = $("welcomeCard");
   const input = $("input"), sendBtn = $("sendBtn"), attachHint = $("attachHint");
-  const camBtn = $("camBtn"), screenBtn = $("screenBtn"), uploadBtn = $("uploadBtn"), fileInput = $("fileInput");
+  const camBtn = $("camBtn"), uploadBtn = $("uploadBtn"), fileInput = $("fileInput");
   const previewBox = $("previewBox"), previewVideo = $("previewVideo"), previewPlaceholder = $("previewPlaceholder"), mediaLabel = $("mediaLabel");
   const captureBtn = $("captureBtn"), stopMediaBtn = $("stopMediaBtn");
   const watchSwitch = $("watchSwitch"), intervalRange = $("intervalRange"), intervalVal = $("intervalVal");
@@ -323,7 +335,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
   let history = [];              // {role, content} content 可为 string 或 array
   let pendingImage = null;       // {url, label} 待发送的附加图片
   let mediaStream = null;
-  let mediaType = null;          // "camera" | "screen"
+  let mediaType = null;          // "camera"
   let watchTimer = null;
   let generatingController = null; // {aborted:boolean}
   let modalResolver = null;
@@ -379,7 +391,6 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     captureBtn.disabled = !mediaStream || !isReady;
     stopMediaBtn.disabled = !mediaStream;
     camBtn.classList.toggle("active", mediaType==="camera");
-    screenBtn.classList.toggle("active", mediaType==="screen");
     if(window.lucide) lucide.createIcons();
   }
 
@@ -393,6 +404,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
       list.forEach(rec=>{
         const id = rec.model_id || rec.model;
         if(!id || seen.has(id)) return;
+        if(isBlockedModel(id)) return;   // Phi-3.5-vision 已移除
         seen.add(id);
         const low = id.toLowerCase();
         const vision = VISION_KEYWORDS.some(k=>low.includes(k));
@@ -403,7 +415,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     // 视觉模型排前面
     items.sort((a,b)=>(b.vision?1:0)-(a.vision?1:0));
     modelSelect.innerHTML = "";
-    const optGroupV = document.createElement("optgroup"); optGroupV.label="支持视觉（可看摄像头/屏幕）";
+    const optGroupV = document.createElement("optgroup"); optGroupV.label="支持视觉（可看图片/摄像头）";
     const optGroupT = document.createElement("optgroup"); optGroupT.label="纯文本模型";
     items.forEach(m=>{
       const opt = document.createElement("option");
@@ -414,7 +426,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     });
     modelSelect.appendChild(optGroupV);
     modelSelect.appendChild(optGroupT);
-    // 默认选第一个支持视觉的模型（可看摄像头/屏幕），否则选列表第一个
+    // 默认选第一个支持视觉的模型（可看图片/摄像头），否则选列表第一个
     if(items.length === 0){
       const opt = document.createElement("option");
       opt.value = ""; opt.textContent = "未能获取模型列表，请在右侧输入自定义模型ID";
@@ -439,11 +451,11 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     const customId = $("customModel").value.trim();
     const modelId = customId || modelSelect.value;
     if(!modelId){ toast("请从下拉选择模型或输入自定义模型ID", true); return; }
-    currentModelVision = isVisionModel(modelId);
-    if(!currentModelVision){
-      const ok = await confirmModal("使用纯文本模型？", "你选择的模型不支持视觉理解，将无法看懂摄像头和屏幕画面。建议选择「支持视觉」分组中的模型。仍要继续加载吗？");
-      if(!ok) return;
+    if(isBlockedModel(modelId)){
+      toast("该模型（Phi-3.5-vision 系列）占用内存过大，已从本页面移除，请选择其他模型", true);
+      return;
     }
+    currentModelVision = isVisionModel(modelId);
     state = "loading"; syncUI();
     progressFill.style.width = "0%"; progressPct.textContent = "0%"; progressText.textContent = "正在连接 HuggingFace 下载模型…";
     try{
@@ -466,7 +478,10 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
       console.error(err);
       state = "idle"; syncUI();
       const emsg = err && err.message ? err.message : String(err);
-      if(emsg.indexOf("model record") >= 0){
+      if(/unsafe-eval|wasm-unsafe-eval|Content Security Policy|WebAssembly/i.test(emsg)){
+        toast("当前打开方式禁止 WebAssembly（CSP 限制），模型无法运行。请用桌面版 Chrome/Edge 直接打开本文件，或见右侧「使用说明」", true);
+        showEnvBanner("当前页面的安全策略（CSP）禁止 WebAssembly，本地模型无法运行。请把本文件下载后用桌面版 Chrome / Edge 直接打开，或用 python3 -m http.server 启动本地服务器访问。");
+      }else if(emsg.indexOf("model record") >= 0){
         toast("模型ID不存在：" + modelId + "。请改从下拉列表选择（下拉里均为当前版本支持的模型），或核对自定义ID拼写", true);
       }else{
         toast("模型加载失败：" + emsg.slice(0,80), true);
@@ -583,7 +598,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     toast("对话已清空");
   });
 
-  // ---------- 摄像头 / 屏幕共享 ----------
+  // ---------- 摄像头 ----------
   function stopMedia(){
     if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); }
     mediaStream = null; mediaType = null;
@@ -609,22 +624,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
       toast("无法开启摄像头：" + (err.name==="NotAllowedError" ? "权限被拒绝" : err.message), true);
     }
   }
-  async function startScreen(){
-    if(mediaStream) stopMedia();
-    try{
-      mediaStream = await navigator.mediaDevices.getDisplayMedia({video:{width:{ideal:1600}}, audio:false});
-      mediaType = "screen"; mediaLabel.textContent = "屏幕共享 LIVE";
-      previewVideo.srcObject = mediaStream;
-      previewBox.classList.add("on"); previewPlaceholder.style.display = "none";
-      syncUI(); toast("屏幕共享已开启");
-      mediaStream.getVideoTracks()[0].addEventListener("ended", ()=>{ toast("屏幕共享已停止"); stopMedia(); });
-    }catch(err){
-      if(err && err.name==="NotAllowedError"){ toast("已取消屏幕共享"); }
-      else toast("无法共享屏幕：" + (err.message||""), true);
-    }
-  }
   camBtn.addEventListener("click", ()=>{ if(mediaType==="camera") stopMedia(); else startCamera(); });
-  screenBtn.addEventListener("click", ()=>{ if(mediaType==="screen") stopMedia(); else startScreen(); });
 
   // 截图（限制最大边长 768，减少 VLM 处理量）
   function captureFrame(){
@@ -645,9 +645,9 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     if(!currentModelVision){
       toast("当前模型不支持视觉，请重新加载视觉模型", true); return;
     }
-    pendingImage = {url, label: mediaType==="camera" ? "[摄像头截图]" : "[屏幕截图]"};
+    pendingImage = {url, label: "[摄像头截图]"};
     attachHint.style.display = "";
-    attachHint.textContent = "已附加" + (mediaType==="camera" ? "摄像头截图" : "屏幕截图") + "，输入问题后发送（或直接发送让 AI 描述）";
+    attachHint.textContent = "已附加摄像头截图，输入问题后发送（或直接发送让 AI 描述）";
     input.focus();
   });
 
@@ -674,7 +674,7 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
   }
   watchSwitch.addEventListener("change", ()=>{
     if(watchSwitch.checked){
-      if(!mediaStream){ toast("请先开启摄像头或屏幕共享", true); watchSwitch.checked = false; return; }
+      if(!mediaStream){ toast("请先开启摄像头", true); watchSwitch.checked = false; return; }
       if(!currentModelVision){ toast("当前模型不支持视觉，无法持续观察", true); watchSwitch.checked = false; return; }
       if(state!=="ready"){ toast("请先加载模型", true); watchSwitch.checked = false; return; }
       const interval = Math.max(5, parseInt(intervalRange.value,10)) * 1000;
@@ -690,11 +690,33 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
     }
   });
 
-  // ---------- WebGPU 检测 ----------
-  if(!("gpu" in navigator)){
-    $("webgpuBanner").classList.add("show");
-    loadBtn.disabled = true;
+  // ---------- 环境检测：WebGPU + WebAssembly(CSP) ----------
+  function showEnvBanner(msg){
+    const b = $("webgpuBanner");
+    b.textContent = msg;
+    b.classList.add("show");
   }
+  function wasmBlockedByCSP(){
+    try{
+      // 编译一个最小的空模块：如果被 CSP 拦截，这里会抛错
+      new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0]));
+      return false;
+    }catch(e){
+      return /unsafe-eval|wasm-unsafe-eval|content security policy|wasm/i.test(String((e && e.message) || e));
+    }
+  }
+  let envOk = true;
+  if(!("gpu" in navigator)){
+    showEnvBanner("当前浏览器不支持 WebGPU，无法运行本地模型。请使用最新版 Chrome / Edge 并开启硬件加速。");
+    loadBtn.disabled = true; envOk = false;
+  }
+  if(wasmBlockedByCSP()){
+    showEnvBanner("当前打开页面的安全策略（CSP）禁止 WebAssembly，模型无法运行。" +
+      "请把本文件保存到电脑，用桌面版 Chrome / Edge 直接双击打开；或在该目录执行 python3 -m http.server 8000 后访问 http://localhost:8000/vision-ai-assistant.html 。" +
+      "注意：应用内预览窗口、部分 App 内置浏览器会拦截 WebAssembly。");
+    loadBtn.disabled = true; envOk = false;
+  }
+  if(!envOk) toast("当前环境不支持运行模型，详见页面顶部提示", true);
 
   syncUI();
   if(window.lucide) lucide.createIcons();
