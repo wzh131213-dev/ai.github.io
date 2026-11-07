@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VisionAI · 本地视觉大模型助手</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --bg:#faf9f4; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+    --accent:#297a2e; --accent-soft:rgba(41,122,46,.12);
+    --accent2:#d97706; --accent2-soft:rgba(217,119,6,.12);
+    --border:rgba(15,23,42,.08); --danger:#dc2626; --danger-soft:rgba(220,38,38,.1);
+    --radius:14px; --shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--text); display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  .font-display{font-family:"Comfortaa",cursive}
+  /* ---------- Header ---------- */
+  header{
+    display:flex; align-items:center; gap:12px; padding:8px 16px;
+    background:var(--card); border-bottom:1px solid var(--border); flex-wrap:wrap;
+  }
+  .logo{display:flex; align-items:center; gap:10px; flex-shrink:0}
+  .logo-mark{
+    width:32px;height:32px;border-radius:9px; background:linear-gradient(135deg,var(--accent),#3fa345);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+  }
+  .logo h1{font-size:16.5px;font-weight:700;letter-spacing:.2px}
+  .logo p{font-size:11px;color:var(--muted);margin-top:1px}
+  .header-controls{display:flex; align-items:center; gap:10px; flex:1; flex-wrap:wrap; justify-content:flex-end}
+  select, button, textarea{font-family:inherit; font-size:14px; color:var(--text)}
+  select{
+    padding:7px 32px 7px 11px; border:1px solid var(--border); border-radius:10px; background:var(--bg);
+    max-width:340px; cursor:pointer; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
+  }
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:10px;
+    border:1px solid var(--border); background:var(--card); cursor:pointer; font-weight:500;
+    transition:transform .12s ease, box-shadow .12s ease, background .12s; white-space:nowrap;
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:var(--shadow)}
+  .btn:active{transform:translateY(0)}
+  .btn:disabled{opacity:.45; cursor:not-allowed; transform:none; box-shadow:none}
+  .btn-primary{background:var(--accent-soft); border-color:var(--accent); color:var(--text)}
+  .btn-primary.loading{background:var(--accent2-soft); border-color:var(--accent2)}
+  .btn-danger{color:var(--danger); border-color:rgba(220,38,38,.3); background:var(--danger-soft)}
+  .btn-ghost{background:transparent; color:var(--muted); border-color:transparent}
+  .btn-ghost:hover{background:var(--accent-soft); color:var(--text)}
+  .status-dot{display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); padding:6px 12px; border:1px solid var(--border); border-radius:999px; background:var(--bg)}
+  .status-dot .dot{width:8px;height:8px;border-radius:50%;background:#cbd5e1;transition:background .3s}
+  .status-dot.ready .dot{background:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+  .status-dot.loading .dot{background:var(--accent2); animation:pulse 1.2s infinite}
+  .status-dot.busy .dot{background:var(--accent2); animation:pulse 1.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  /* ---------- Progress panel ---------- */
+  #progressPanel{display:none; padding:8px 16px; background:var(--card); border-bottom:1px solid var(--border)}
+  #progressPanel.show{display:block}
+  .progress-row{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px}
+  .progress-track{height:8px; background:var(--border); border-radius:99px; overflow:hidden}
+  .progress-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),#3fa345); border-radius:99px; transition:width .25s ease}
+  /* ---------- Main layout ---------- */
+  main{flex:1; display:flex; min-height:0; overflow:hidden}
+  aside{width:340px; flex-shrink:0; min-height:0}
+  @media (max-width:900px){ main{flex-direction:column} aside{width:100%; max-height:42vh; border-top:1px solid var(--border); border-left:none} }
+  /* ---------- Chat ---------- */
+  #chatPanel{flex:1; min-width:0; display:flex; flex-direction:column; min-height:0; overflow:hidden; padding:12px 16px 10px; gap:10px}
+  #messages{flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding-right:6px}
+  #messages::-webkit-scrollbar{width:6px} #messages::-webkit-scrollbar-thumb{background:var(--border); border-radius:99px}
+  .msg{display:flex; gap:8px; max-width:88%; animation:fadeUp .25s ease}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+  .msg.user{align-self:flex-end; flex-direction:row-reverse}
+  .avatar{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+  .msg.assistant .avatar{background:linear-gradient(135deg,var(--accent),#3fa345)}
+  .msg.user .avatar{background:var(--accent2)}
+  .bubble{padding:9px 13px; border-radius:11px; line-height:1.55; font-size:14px; word-break:break-word; overflow-wrap:anywhere}
+  .msg.assistant .bubble{background:var(--card); border:1px solid var(--border); border-top-left-radius:4px; box-shadow:var(--shadow)}
+  .msg.user .bubble{background:var(--accent-soft); border:1px solid rgba(41,122,46,.25); border-top-right-radius:4px}
+  .bubble img.attach{max-width:260px; max-height:180px; border-radius:9px; margin-bottom:8px; display:block; border:1px solid var(--border)}
+  .bubble pre{background:#f1f0ea; border:1px solid var(--border); border-radius:9px; padding:10px 12px; overflow-x:auto; margin:8px 0; font-size:12.5px}
+  .bubble code{background:#f1f0ea; padding:1px 6px; border-radius:5px; font-size:12.5px; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .bubble pre code{background:transparent; padding:0}
+  .bubble h3,.bubble h4{margin:8px 0 4px; font-size:15px}
+  .bubble ul{margin:6px 0 6px 20px} .bubble li{margin:2px 0}
+  .bubble strong{font-weight:600}
+  .cursor{display:inline-block; width:7px; height:15px; background:var(--accent); vertical-align:-2px; margin-left:2px; animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .welcome{
+    align-self:center; max-width:520px; width:100%; text-align:center; padding:18px 20px; margin-top:0;
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+  }
+  .welcome h2{font-size:19px; margin-bottom:6px}
+  .welcome p{color:var(--muted); font-size:13px; line-height:1.55; margin-bottom:10px}
+  .feature-chips{display:flex; flex-wrap:wrap; gap:6px; justify-content:center}
+  .chip{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; padding:5px 10px; border-radius:99px; background:var(--accent-soft); color:var(--text); border:1px solid rgba(41,122,46,.2)}
+  .chip.warn{background:var(--accent2-soft); border-color:rgba(217,119,6,.25)}
+  /* ---------- Input area ---------- */
+  #inputArea{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:8px 10px; box-shadow:var(--shadow)}
+  #attachBar{display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap; align-items:center}
+  .icon-btn{
+    width:30px;height:30px;border-radius:8px; border:1px solid var(--border); background:var(--bg);
+    display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); transition:.15s;
+  }
+  .icon-btn:hover{color:var(--accent); border-color:var(--accent); background:var(--accent-soft)}
+  .icon-btn.active{color:var(--accent); border-color:var(--accent); background:var(--accent-soft)}
+  .icon-btn:disabled{opacity:.4; cursor:not-allowed}
+  .icon-btn .lucide{width:17px;height:17px}
+  #inputRow{display:flex; gap:10px; align-items:flex-end}
+  textarea{
+    flex:1; border:none; outline:none; resize:none; background:transparent; font-size:14.5px; line-height:1.6;
+    max-height:120px; min-height:36px; padding:6px 4px;
+  }
+  #sendBtn{flex-shrink:0; height:36px; padding:0 18px}
+  #hintText{font-size:11px; color:var(--muted); margin-top:4px; padding-left:2px}
+  /* ---------- Media panel ---------- */
+  aside{background:var(--card); border-left:1px solid var(--border); padding:12px; display:flex; flex-direction:column; gap:8px; overflow-y:auto}
+  @media (max-width:900px){ aside{border-left:none} }
+  aside h3{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; margin-top:2px}
+  .preview-box{
+    position:relative; width:100%; aspect-ratio:16/10; max-height:180px; min-height:120px; background:#0f172a; border-radius:10px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; border:1px solid var(--border);
+  }
+  .preview-box video{width:100%; height:100%; object-fit:cover; display:none}
+  .preview-box.on video{display:block}
+  .preview-placeholder{color:#94a3b8; font-size:11.5px; text-align:center; padding:12px; line-height:1.5}
+  .preview-placeholder .lucide{width:24px;height:24px;margin-bottom:6px;opacity:.6}
+  .media-badge{position:absolute; top:8px; left:8px; background:rgba(220,38,38,.9); color:#fff; font-size:10.5px; padding:3px 9px; border-radius:99px; display:none; align-items:center; gap:5px; font-weight:600}
+  .preview-box.on .media-badge{display:inline-flex}
+  .media-badge .rec-dot{width:6px;height:6px;background:#fff;border-radius:50%;animation:pulse 1s infinite}
+  .media-actions{display:flex; gap:8px; flex-wrap:wrap}
+  .media-actions .btn{flex:1; justify-content:center; padding:6px 8px; font-size:12.5px}
+  .watch-toggle{display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg)}
+  .switch{position:relative; width:38px; height:22px; flex-shrink:0; cursor:pointer}
+  .switch input{opacity:0; width:0; height:0}
+  .slider{position:absolute; inset:0; background:#cbd5e1; border-radius:99px; transition:.2s}
+  .slider:before{content:""; position:absolute; width:16px; height:16px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s}
+  .switch input:checked + .slider{background:var(--accent)}
+  .switch input:checked + .slider:before{transform:translateX(16px)}
+  .watch-toggle label{font-size:12.5px; font-weight:500; cursor:pointer; flex:1}
+  .watch-toggle small{display:block; color:var(--muted); font-weight:400; margin-top:2px}
+  .interval-row{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted)}
+  .interval-row input[type=range]{flex:1; accent-color:var(--accent)}
+  .sys-prompt{display:flex; flex-direction:column; gap:6px}
+  .sys-prompt textarea{width:100%; border:1px solid var(--border); border-radius:9px; padding:7px 9px; font-size:12.5px; min-height:52px; background:var(--bg); resize:vertical}
+  .info-note{font-size:11px; color:var(--muted); line-height:1.5; padding:8px 10px; background:var(--accent2-soft); border:1px solid rgba(217,119,6,.2); border-radius:10px}
+  /* ---------- Toast ---------- */
+  #toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:#0f172a; color:#fff; padding:11px 20px; border-radius:11px; font-size:13.5px; opacity:0; pointer-events:none; transition:.3s; z-index:100; max-width:90vw; box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  #toast.error{background:var(--danger)}
+  /* ---------- Modal confirm ---------- */
+  #modal{position:fixed; inset:0; background:rgba(15,23,42,.45); display:none; align-items:center; justify-content:center; z-index:200; padding:20px}
+  #modal.show{display:flex}
+  .modal-card{background:var(--card); border-radius:16px; padding:24px; max-width:420px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .modal-card h4{margin-bottom:8px; font-size:16px}
+  .modal-card p{font-size:13.5px; color:var(--muted); line-height:1.7; margin-bottom:18px}
+  .modal-actions{display:flex; gap:10px; justify-content:flex-end}
+  .banner{display:none; padding:9px 16px; background:var(--danger-soft); color:var(--danger); font-size:12.5px; border-bottom:1px solid rgba(220,38,38,.2); text-align:center}
+  .banner.show{display:block}
+</style>
+</head>
+<body>
+
+<div id="webgpuBanner" class="banner">当前浏览器不支持 WebGPU，无法运行本地模型。请使用最新版 Chrome / Edge 并开启硬件加速。</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark"><i data-lucide="brain-circuit" style="width:20px;height:20px"></i></div>
+    <div>
+      <h1 class="font-display">VisionAI</h1>
+      <p>本地运行 · 视觉大模型 · 隐私安全</p>
+    </div>
+  </div>
+  <div class="header-controls">
+    <select id="modelSelect" title="选择模型"></select>
+    <input type="text" id="customModel" placeholder="自定义模型ID（可选）" style="padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);font-size:13px;width:210px;max-width:42vw" title="手动输入 MLC 模型 ID，填写后将覆盖下拉选择">
+    <button id="loadBtn" class="btn btn-primary"><i data-lucide="download-cloud" style="width:16px;height:16px"></i><span>加载模型</span></button>
+    <span id="statusDot" class="status-dot"><span class="dot"></span><span id="statusText">未加载</span></span>
+    <button id="clearBtn" class="btn btn-ghost" title="清空对话"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+  </div>
+</header>
+
+<div id="progressPanel">
+  <div class="progress-row"><span id="progressText">准备下载…</span><span id="progressPct">0%</span></div>
+  <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+</div>
+
+<main>
+  <section id="chatPanel">
+    <div id="messages">
+      <div class="welcome" id="welcomeCard">
+        <h2 class="font-display">你好，我是本地 AI 助手</h2>
+        <p>选择一个模型并点击「加载模型」，首次使用会联网下载权重（约 0.3~2 GB，之后浏览器缓存可离线使用）。支持视觉的模型可以看懂上传的图片和摄像头画面。</p>
+        <div class="feature-chips">
+          <span class="chip"><i data-lucide="message-square" style="width:13px;height:13px"></i>本地文本对话</span>
+          <span class="chip"><i data-lucide="camera" style="width:13px;height:13px"></i>摄像头读图</span>
+          <span class="chip warn"><i data-lucide="shield-check" style="width:13px;height:13px"></i>数据不出浏览器</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="inputArea">
+      <div id="attachBar">
+        <button class="icon-btn" id="camBtn" title="开启摄像头"><i data-lucide="camera"></i></button>
+        <button class="icon-btn" id="uploadBtn" title="上传图片"><i data-lucide="image-plus"></i></button>
+        <input type="file" id="fileInput" accept="image/*" hidden>
+        <span style="flex:1"></span>
+        <span id="attachHint" style="font-size:11.5px;color:var(--muted);display:none">已附加图片，输入问题后发送</span>
+      </div>
+      <div id="inputRow">
+        <textarea id="input" rows="1" placeholder="输入消息…（Shift+Enter 换行）"></textarea>
+        <button id="sendBtn" class="btn btn-primary" disabled><i data-lucide="send" style="width:16px;height:16px"></i><span>发送</span></button>
+      </div>
+      <div id="hintText">提示：带「视觉」标签的模型才能理解图片；纯文本模型只回答文字。</div>
+    </div>
+  </section>
+
+  <aside>
+    <h3>媒体源</h3>
+    <div class="preview-box" id="previewBox">
+      <span class="media-badge"><span class="rec-dot"></span><span id="mediaLabel">LIVE</span></span>
+      <video id="previewVideo" autoplay playsinline muted></video>
+      <div class="preview-placeholder" id="previewPlaceholder">
+        <i data-lucide="video-off"></i>
+        <div>点击上方摄像头按钮<br>开启实时画面预览</div>
+      </div>
+    </div>
+    <div class="media-actions">
+      <button class="btn" id="captureBtn" disabled><i data-lucide="camera" style="width:15px;height:15px"></i>截图提问</button>
+      <button class="btn btn-danger" id="stopMediaBtn" disabled><i data-lucide="square" style="width:14px;height:14px"></i>停止</button>
+    </div>
+
+    <h3>持续观察</h3>
+    <div class="watch-toggle">
+      <label class="switch"><input type="checkbox" id="watchSwitch"><span class="slider"></span></label>
+      <label for="watchSwitch">自动定时分析画面<small>开启后每隔一段时间自动截图并让 AI 描述</small></label>
+    </div>
+    <div class="interval-row">
+      <span>间隔</span>
+      <input type="range" id="intervalRange" min="5" max="30" step="1" value="10">
+      <span id="intervalVal" style="min-width:42px;text-align:right;font-variant-numeric:tabular-nums">10 秒</span>
+    </div>
+
+    <h3>上下文窗口</h3>
+    <div class="interval-row" style="gap:10px">
+      <select id="ctxSelect" style="flex:1;max-width:none;font-size:12.5px;padding:6px 28px 6px 10px">
+        <option value="2048">2048 tokens · 最省显存</option>
+        <option value="4096" selected>4096 tokens · 推荐</option>
+        <option value="8192">8192 tokens · 较吃显存</option>
+        <option value="16384">16384 tokens · 大显存</option>
+      </select>
+    </div>
+    <div class="info-note" style="margin-top:-2px">上下文越大越吃显存，7B 等大模型建议先用 2048~4096，否则容易显存不足导致 GPU 报错。</div>
+
+    <h3>系统提示词</h3>
+    <div class="sys-prompt">
+      <textarea id="sysPrompt" placeholder="例如：你是一个简洁的助手，用中文回答。">你是一个有帮助的 AI 助手，用简洁的中文回答问题。如果用户发送了图片，请仔细描述图片内容并回答相关问题。</textarea>
+    </div>
+
+    <div class="info-note">
+      <strong>使用说明：</strong>模型权重从 HuggingFace 下载并缓存到浏览器，第二次打开无需重新下载。摄像头权限由浏览器弹窗授权，所有画面仅在本地处理，不会上传。为节省内存，本页面已移除屏幕共享功能（共享屏幕会使内存占用飙升）。
+    </div>
+
+    <div class="info-note">
+      <strong>运行环境要求：</strong>
+      <br>• 需要桌面版 Chrome / Edge 113+ 且开启硬件加速（要 WebGPU）
+      <br>• 若提示「WebAssembly … unsafe-eval / wasm-unsafe-eval」，说明当前打开方式的 CSP 禁止 WebAssembly：请把文件保存到电脑后直接打开，或在文件所在目录执行 <code>python3 -m http.server 8000</code>，再访问 <code>http://localhost:8000/vision-ai-assistant.html</code>
+      <br>• 应用内预览窗口、App 内置浏览器、企业策略管控的浏览器都会拦截 WebAssembly
+    </div>
+  </aside>
+</main>
+
+<div id="toast"></div>
+
+<div id="modal">
+  <div class="modal-card">
+    <h4 id="modalTitle">确认</h4>
+    <p id="modalBody"></p>
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">取消</button>
+      <button class="btn btn-primary" id="modalOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.87";
+
+/* ============================================================
+   VisionAI — 本地视觉大模型助手
+   状态机: idle | loading | ready | generating
+   ============================================================ */
+(function(){
+  "use strict";
+
+  // ---------- 硬编码常用模型（fallback），运行时会与 prebuiltAppConfig 合并 ----------
+  const HARDCODED_MODELS = [
+    { id:"SmolVLM2-256M-Instruct-q4f16_1-MLC", vision:true,  note:"256M · 最快视觉模型" },
+    { id:"SmolVLM2-500M-Instruct-q4f16_1-MLC", vision:true,  note:"500M · 轻量视觉模型" },
+    { id:"Moondream2-q4f16_1-MLC",             vision:true,  note:"1.8B · 视觉理解较好" },
+    { id:"Qwen2-VL-2B-Instruct-q4f16_1-MLC",   vision:true,  note:"2B · 多语言视觉" },
+    { id:"Llama-3.2-11B-Vision-Instruct-q4f16_1-MLC", vision:true, note:"11B · 需大显存" },
+    { id:"Qwen2.5-0.5B-Instruct-q4f16_1-MLC",  vision:false, note:"0.5B · 纯文本超快" },
+    { id:"Qwen2.5-1.5B-Instruct-q4f16_1-MLC",  vision:false, note:"1.5B · 纯文本推荐" },
+    { id:"SmolLM2-1.7B-Instruct-q4f16_1-MLC",  vision:false, note:"1.7B · 纯文本" },
+    { id:"Llama-3.2-1B-Instruct-q4f16_1-MLC",  vision:false, note:"1B · 纯文本" },
+    { id:"Llama-3.2-3B-Instruct-q4f16_1-MLC",  vision:false, note:"3B · 纯文本" },
+    { id:"Phi-3.5-mini-instruct-q4f16_1-MLC",  vision:false, note:"3.8B · 纯文本较强" },
+  ];
+  const VISION_KEYWORDS = ["moondream","smolvlm","vl","vision","llava","gemma-3"];
+  // ---------- 已移除的模型（占用内存过大，禁止出现在列表 / 禁止加载） ----------
+  // Phi-3.5-vision 系列运行时会吃满内存（实测可达 64 GB 级别），已从本页面彻底移除。
+  const BLOCKED_MODEL_PATTERNS = [/phi-?3\.5[-_]?vision/i, /phi3\.5[-_]?vision/i];
+  function isBlockedModel(id){
+    if(!id) return false;
+    return BLOCKED_MODEL_PATTERNS.some(re=>re.test(id));
+  }
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const modelSelect = $("modelSelect"), loadBtn = $("loadBtn"), clearBtn = $("clearBtn");
+  const statusDot = $("statusDot"), statusText = $("statusText");
+  const progressPanel = $("progressPanel"), progressText = $("progressText"), progressPct = $("progressPct"), progressFill = $("progressFill");
+  const messagesEl = $("messages"), welcomeCard = $("welcomeCard");
+  const input = $("input"), sendBtn = $("sendBtn"), attachHint = $("attachHint");
+  const camBtn = $("camBtn"), uploadBtn = $("uploadBtn"), fileInput = $("fileInput");
+  const previewBox = $("previewBox"), previewVideo = $("previewVideo"), previewPlaceholder = $("previewPlaceholder"), mediaLabel = $("mediaLabel");
+  const captureBtn = $("captureBtn"), stopMediaBtn = $("stopMediaBtn");
+  const watchSwitch = $("watchSwitch"), intervalRange = $("intervalRange"), intervalVal = $("intervalVal");
+  const sysPromptEl = $("sysPrompt");
+  const ctxSelect = $("ctxSelect");
+  const toastEl = $("toast"), modalEl = $("modal"), modalTitle = $("modalTitle"), modalBody = $("modalBody"), modalOk = $("modalOk"), modalCancel = $("modalCancel");
+
+  // ---------- 状态 ----------
+  let state = "idle";            // idle | loading | ready | generating
+  let engine = null;
+  let currentModelId = null;
+  let currentModelVision = false;
+  let history = [];              // {role, content} content 可为 string 或 array
+  let pendingImage = null;       // {url, label} 待发送的附加图片
+  let mediaStream = null;
+  let mediaType = null;          // "camera"
+  let watchTimer = null;
+  let generatingController = null; // {aborted:boolean}
+  let modalResolver = null;
+  let toastTimer = null;
+
+  // ---------- 工具 ----------
+  function toast(msg, isError){
+    toastEl.textContent = msg;
+    toastEl.classList.toggle("error", !!isError);
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toastEl.classList.remove("show"), 3200);
+  }
+  function confirmModal(title, body){
+    return new Promise(res=>{
+      modalTitle.textContent = title; modalBody.textContent = body;
+      modalEl.classList.add("show");
+      modalResolver = res;
+    });
+  }
+  modalOk.addEventListener("click", ()=>{ modalEl.classList.remove("show"); if(modalResolver){modalResolver(true); modalResolver=null;} });
+  modalCancel.addEventListener("click", ()=>{ modalEl.classList.remove("show"); if(modalResolver){modalResolver(false); modalResolver=null;} });
+
+  function escapeHtml(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function renderMarkdown(text){
+    const codeBlocks = [];
+    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (m,lang,code)=>{ codeBlocks.push(escapeHtml(code)); return "\x00CB"+(codeBlocks.length-1)+"\x00"; });
+    let out = escapeHtml(text);
+    out = out.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+    out = out.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+    out = out.replace(/^### (.*)$/gm, "<h4>$1</h4>");
+    out = out.replace(/^## (.*)$/gm, "<h3>$1</h3>");
+    out = out.replace(/(?:\r?\n|^)- (.*)/g, "\n<li>$1</li>");
+    out = out.replace(/(<li>.*<\/li>(?:\n<li>.*<\/li>)*)/g, '<ul style="margin:6px 0 6px 20px">$1</ul>');
+    out = out.replace(/\x00CB(\d+)\x00/g, (m,i)=>'<pre><code>'+codeBlocks[+i]+'</code></pre>');
+    out = out.replace(/\n/g, "<br>");
+    return out;
+  }
+
+  // ---------- UI 状态同步（单一状态机 C1） ----------
+  function syncUI(){
+    const isIdle = state==="idle", isLoading = state==="loading", isReady = state==="ready", isGen = state==="generating";
+    loadBtn.disabled = isLoading || isGen;
+    loadBtn.classList.toggle("loading", isLoading);
+    loadBtn.querySelector("span").textContent = isLoading ? "加载中…" : (isReady||isGen ? "重新加载" : "加载模型");
+    modelSelect.disabled = isLoading || isGen;
+    sendBtn.disabled = !(isReady || isGen) ? true : false;
+    if(isGen){ sendBtn.querySelector("span").textContent = "停止"; sendBtn.classList.add("btn-danger"); }
+    else { sendBtn.querySelector("span").textContent = "发送"; sendBtn.classList.remove("btn-danger"); }
+    statusDot.className = "status-dot" + (isReady||isGen ? " ready" : isLoading ? " loading" : isGen ? " busy" : "");
+    statusText.textContent = isLoading ? "下载/编译中" : isGen ? "生成中" : isReady ? "就绪 · " + (currentModelId||"").replace(/-q4f?1?6?_1-MLC|q0f16-MLC/,"").slice(0,22) : "未加载";
+    progressPanel.classList.toggle("show", isLoading);
+    captureBtn.disabled = !mediaStream || !isReady;
+    stopMediaBtn.disabled = !mediaStream;
+    camBtn.classList.toggle("active", mediaType==="camera");
+    if(window.lucide) lucide.createIcons();
+  }
+
+  // ---------- 模型下拉填充 ----------
+  function fillModelSelect(){
+    const seen = new Set();
+    const items = [];
+    // 先加运行时 prebuiltAppConfig 中的模型（最准确）
+    try{
+      const list = (webllm.prebuiltAppConfig && webllm.prebuiltAppConfig.model_list) || [];
+      list.forEach(rec=>{
+        const id = rec.model_id || rec.model;
+        if(!id || seen.has(id)) return;
+        if(isBlockedModel(id)) return;   // Phi-3.5-vision 已移除
+        seen.add(id);
+        const low = id.toLowerCase();
+        const vision = VISION_KEYWORDS.some(k=>low.includes(k));
+        items.push({id, vision, note: vision ? "视觉模型" : "纯文本模型"});
+      });
+    }catch(e){ /* 忽略，用硬编码 */ }
+    // 仅使用运行时 prebuiltAppConfig 中的模型，保证每个选项都有对应的 model record，避免 "Cannot find model record" 错误
+    // 视觉模型排前面
+    items.sort((a,b)=>(b.vision?1:0)-(a.vision?1:0));
+    modelSelect.innerHTML = "";
+    const optGroupV = document.createElement("optgroup"); optGroupV.label="支持视觉（可看图片/摄像头）";
+    const optGroupT = document.createElement("optgroup"); optGroupT.label="纯文本模型";
+    items.forEach(m=>{
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.id + (m.note ? "  —  " + m.note : "");
+      opt.dataset.vision = m.vision ? "1" : "0";
+      (m.vision ? optGroupV : optGroupT).appendChild(opt);
+    });
+    modelSelect.appendChild(optGroupV);
+    modelSelect.appendChild(optGroupT);
+    // 默认选第一个支持视觉的模型（可看图片/摄像头），否则选列表第一个
+    if(items.length === 0){
+      const opt = document.createElement("option");
+      opt.value = ""; opt.textContent = "未能获取模型列表，请在右侧输入自定义模型ID";
+      modelSelect.appendChild(opt);
+    }else{
+      const firstVision = items.find(m=>m.vision);
+      modelSelect.value = firstVision ? firstVision.id : items[0].id;
+    }
+  }
+  fillModelSelect();
+
+  function isVisionModel(id){
+    const opt = [...modelSelect.options].find(o=>o.value===id);
+    if(opt) return opt.dataset.vision === "1";
+    const low = (id||"").toLowerCase();
+    return VISION_KEYWORDS.some(k=>low.includes(k));
+  }
+
+  // ---------- 加载模型 ----------
+  loadBtn.addEventListener("click", async ()=>{
+    if(state==="loading" || state==="generating") return;
+    const customId = $("customModel").value.trim();
+    const modelId = customId || modelSelect.value;
+    if(!modelId){ toast("请从下拉选择模型或输入自定义模型ID", true); return; }
+    if(isBlockedModel(modelId)){
+      toast("该模型（Phi-3.5-vision 系列）占用内存过大，已从本页面移除，请选择其他模型", true);
+      return;
+    }
+    currentModelVision = isVisionModel(modelId);
+    state = "loading"; syncUI();
+    progressFill.style.width = "0%"; progressPct.textContent = "0%"; progressText.textContent = "正在连接 HuggingFace 下载模型…";
+    try{
+      if(engine){ try{ await engine.unload(); }catch(e){} engine = null; }
+      const ctxWindow = Math.max(512, parseInt((ctxSelect && ctxSelect.value) || "4096", 10));
+      // 复制并覆盖所选模型的 context_window_size：默认上下文往往很大，KV cache 会吃掉大量显存
+      let appConfig;
+      if(webllm.prebuiltAppConfig && webllm.prebuiltAppConfig.model_list){
+        appConfig = Object.assign({}, webllm.prebuiltAppConfig, {
+          model_list: webllm.prebuiltAppConfig.model_list.map(rec=>{
+            const id = rec.model_id || rec.model;
+            if(id !== modelId) return rec;
+            return Object.assign({}, rec, {
+              overrides: Object.assign({}, rec.overrides, { context_window_size: ctxWindow })
+            });
+          })
+        });
+      }
+      engine = await webllm.CreateMLCEngine(modelId, {
+        appConfig: appConfig,
+        initProgressCallback: (report)=>{
+          if(report.text) progressText.textContent = report.text;
+          const p = report.progress;
+          if(typeof p === "number" && isFinite(p) && p >= 0){
+            const pct = Math.min(100, Math.round(p*100));
+            progressFill.style.width = pct + "%"; progressPct.textContent = pct + "%";
+          }
+        }
+      });
+      currentModelId = modelId;
+      state = "ready"; syncUI();
+      toast("模型加载完成，可以开始对话了");
+      addSystemMessageIfNeeded();
+    }catch(err){
+      console.error(err);
+      state = "idle"; syncUI();
+      const emsg = err && err.message ? err.message : String(err);
+      if(/unsafe-eval|wasm-unsafe-eval|Content Security Policy|WebAssembly/i.test(emsg)){
+        toast("当前打开方式禁止 WebAssembly（CSP 限制），模型无法运行。请用桌面版 Chrome/Edge 直接打开本文件，或见右侧「使用说明」", true);
+        showEnvBanner("当前页面的安全策略（CSP）禁止 WebAssembly，本地模型无法运行。请把本文件下载后用桌面版 Chrome / Edge 直接打开，或用 python3 -m http.server 启动本地服务器访问。");
+      }else if(emsg.indexOf("model record") >= 0){
+        toast("模型ID不存在：" + modelId + "。请改从下拉列表选择（下拉里均为当前版本支持的模型），或核对自定义ID拼写", true);
+      }else{
+        toast("模型加载失败：" + emsg.slice(0,80), true);
+      }
+    }
+  });
+
+  function addSystemMessageIfNeeded(){
+    if(history.length === 0){
+      history.push({role:"system", content: sysPromptEl.value.trim() || "你是一个有帮助的AI助手。"});
+    }
+  }
+  sysPromptEl.addEventListener("change", ()=>{
+    if(history.length>0 && history[0].role==="system") history[0].content = sysPromptEl.value.trim() || history[0].content;
+  });
+
+  // ---------- 消息渲染 ----------
+  function addMessage(role, content, imageUrl){
+    if(welcomeCard) welcomeCard.style.display = "none";
+    const wrap = document.createElement("div");
+    wrap.className = "msg " + role;
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.innerHTML = role==="user" ? '<i data-lucide="user" style="width:16px;height:16px"></i>' : '<i data-lucide="bot" style="width:16px;height:16px"></i>';
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    if(imageUrl){
+      const img = document.createElement("img");
+      img.className = "attach"; img.src = imageUrl; img.alt = "attached";
+      bubble.appendChild(img);
+    }
+    const textEl = document.createElement("div");
+    textEl.innerHTML = renderMarkdown(content || "");
+    bubble.appendChild(textEl);
+    wrap.appendChild(avatar); wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    if(window.lucide) lucide.createIcons();
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return {wrap, textEl, bubble};
+  }
+
+  function appendAssistantText(textEl, text, done){
+    textEl.innerHTML = renderMarkdown(text) + (done ? "" : '<span class="cursor"></span>');
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  // ---------- 发送对话 ----------
+  async function sendUserMessage(text, imageUrl, imageLabel){
+    if(state!=="ready") return;
+    if(!text && !imageUrl){ toast("请输入消息或附加图片", true); return; }
+    addSystemMessageIfNeeded();
+    // 构造用户消息内容
+    let userContent;
+    if(imageUrl){
+      userContent = [{type:"image_url", image_url:{url:imageUrl}}, {type:"text", text: text || "请描述这张图片。"}];
+    }else{
+      userContent = text;
+    }
+    history.push({role:"user", content: userContent});
+    addMessage("user", text || (imageLabel || "[图片]"), imageUrl);
+
+    state = "generating"; syncUI();
+    const {textEl} = addMessage("assistant", "");
+    let full = "";
+    generatingController = {aborted:false};
+    try{
+      const stream = await engine.chat.completions.create({
+        messages: history,
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 1024,
+      });
+      for await (const chunk of stream){
+        if(generatingController.aborted) break;
+        const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+        if(delta){ full += delta; appendAssistantText(textEl, full, false); }
+      }
+      if(generatingController.aborted) full += "\n\n[已停止]";
+    }catch(err){
+      console.error(err);
+      const emsg = (err && err.message) ? err.message : String(err);
+      if(/map async was not successful|device (lost|removed)|out of memory|oom|buffer.*destroyed|invalid to (map|submit)|GPUDevice/i.test(emsg)){
+        // 显存不足 / GPU 设备丢失：引擎已不可用，必须卸载后重新加载
+        full += "\n\n**显存不足，GPU 计算中断。**\n" +
+                "常见原因：模型太大、上下文窗口太长，或显存被其它网页/程序占用。\n" +
+                "建议：① 换更小的模型（0.5B~3B）；② 把右侧「上下文窗口」调到 2048；③ 关闭其它占用显存的标签页后重新点「重新加载」。";
+        try{ engine && engine.unload && engine.unload(); }catch(e){}
+        engine = null; currentModelId = null;
+        generatingController = null;
+        appendAssistantText(textEl, full, true);
+        history.push({role:"assistant", content: full});
+        state = "idle"; syncUI();
+        toast("显存不足，模型已卸载，请换小模型或降低上下文后重新加载", true);
+        return;
+      }
+      full += "\n\n[生成出错：" + escapeHtml(emsg.slice(0,140)) + "]";
+    }
+    appendAssistantText(textEl, full, true);
+    history.push({role:"assistant", content: full});
+    generatingController = null;
+    state = "ready"; syncUI();
+  }
+
+  sendBtn.addEventListener("click", ()=>{
+    if(state==="generating"){
+      if(generatingController) generatingController.aborted = true;
+      try{ engine && engine.interruptGenerate && engine.interruptGenerate(); }catch(e){}
+      return;
+    }
+    const text = input.value.trim();
+    const img = pendingImage; pendingImage = null; attachHint.style.display = "none";
+    input.value = ""; input.style.height = "auto";
+    sendUserMessage(text, img ? img.url : null, img ? img.label : null);
+  });
+  input.addEventListener("keydown", e=>{
+    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendBtn.click(); }
+  });
+  input.addEventListener("input", ()=>{
+    input.style.height = "auto";
+    input.style.height = Math.min(160, input.scrollHeight) + "px";
+  });
+
+  clearBtn.addEventListener("click", async ()=>{
+    const ok = await confirmModal("清空对话？", "将清除当前对话历史（已加载的模型保留）。");
+    if(!ok) return;
+    history = [];
+    messagesEl.querySelectorAll(".msg").forEach(m=>m.remove());
+    if(welcomeCard) welcomeCard.style.display = "";
+    toast("对话已清空");
+  });
+
+  // ---------- 摄像头 ----------
+  function stopMedia(){
+    if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); }
+    mediaStream = null; mediaType = null;
+    previewVideo.srcObject = null;
+    previewBox.classList.remove("on");
+    previewPlaceholder.style.display = "";
+    watchSwitch.checked = false; stopWatch();
+    syncUI();
+  }
+  stopMediaBtn.addEventListener("click", stopMedia);
+
+  async function startCamera(){
+    if(mediaStream) stopMedia();
+    try{
+      mediaStream = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280}, height:{ideal:720}, facingMode:"user"}, audio:false});
+      mediaType = "camera"; mediaLabel.textContent = "摄像头 LIVE";
+      previewVideo.srcObject = mediaStream;
+      previewBox.classList.add("on"); previewPlaceholder.style.display = "none";
+      syncUI(); toast("摄像头已开启");
+      mediaStream.getVideoTracks()[0].addEventListener("ended", stopMedia);
+    }catch(err){
+      console.error(err);
+      toast("无法开启摄像头：" + (err.name==="NotAllowedError" ? "权限被拒绝" : err.message), true);
+    }
+  }
+  camBtn.addEventListener("click", ()=>{ if(mediaType==="camera") stopMedia(); else startCamera(); });
+
+  // 截图（限制最大边长 768，减少 VLM 处理量）
+  function captureFrame(){
+    if(!mediaStream || !previewVideo.videoWidth) return null;
+    const MAX = 768;
+    let w = previewVideo.videoWidth, h = previewVideo.videoHeight;
+    const scale = Math.min(1, MAX/Math.max(w,h));
+    w = Math.round(w*scale); h = Math.round(h*scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    canvas.getContext("2d").drawImage(previewVideo, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", 0.78);
+  }
+
+  captureBtn.addEventListener("click", ()=>{
+    const url = captureFrame();
+    if(!url){ toast("暂无画面", true); return; }
+    if(!currentModelVision){
+      toast("当前模型不支持视觉，请重新加载视觉模型", true); return;
+    }
+    pendingImage = {url, label: "[摄像头截图]"};
+    attachHint.style.display = "";
+    attachHint.textContent = "已附加摄像头截图，输入问题后发送（或直接发送让 AI 描述）";
+    input.focus();
+  });
+
+  // 上传图片
+  uploadBtn.addEventListener("click", ()=>fileInput.click());
+  fileInput.addEventListener("change", ()=>{
+    const f = fileInput.files && fileInput.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = e=>{
+      pendingImage = {url: e.target.result, label: "[上传图片]"};
+      attachHint.style.display = "";
+      attachHint.textContent = "已附加图片，输入问题后发送";
+      toast("图片已附加");
+    };
+    reader.readAsDataURL(f);
+    fileInput.value = "";
+  });
+
+  // ---------- 持续观察模式 ----------
+  intervalRange.addEventListener("input", ()=>{ intervalVal.textContent = intervalRange.value + " 秒"; });
+  function stopWatch(){
+    if(watchTimer){ clearInterval(watchTimer); watchTimer = null; }
+  }
+  watchSwitch.addEventListener("change", ()=>{
+    if(watchSwitch.checked){
+      if(!mediaStream){ toast("请先开启摄像头", true); watchSwitch.checked = false; return; }
+      if(!currentModelVision){ toast("当前模型不支持视觉，无法持续观察", true); watchSwitch.checked = false; return; }
+      if(state!=="ready"){ toast("请先加载模型", true); watchSwitch.checked = false; return; }
+      const interval = Math.max(5, parseInt(intervalRange.value,10)) * 1000;
+      toast("持续观察已开启，每 " + (interval/1000) + " 秒分析一次");
+      watchTimer = setInterval(()=>{
+        if(state!=="ready") return; // 生成中跳过，避免堆积
+        const url = captureFrame();
+        if(!url) return;
+        sendUserMessage("请用一句话简要描述当前画面中的关键内容或变化。", url, "[自动截图]");
+      }, interval);
+    }else{
+      stopWatch(); toast("持续观察已关闭");
+    }
+  });
+
+  // ---------- 环境检测：WebGPU + WebAssembly(CSP) ----------
+  function showEnvBanner(msg){
+    const b = $("webgpuBanner");
+    b.textContent = msg;
+    b.classList.add("show");
+  }
+  function wasmBlockedByCSP(){
+    try{
+      // 编译一个最小的空模块：如果被 CSP 拦截，这里会抛错
+      new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0]));
+      return false;
+    }catch(e){
+      return /unsafe-eval|wasm-unsafe-eval|content security policy|wasm/i.test(String((e && e.message) || e));
+    }
+  }
+  let envOk = true;
+  if(!("gpu" in navigator)){
+    showEnvBanner("当前浏览器不支持 WebGPU，无法运行本地模型。请使用最新版 Chrome / Edge 并开启硬件加速。");
+    loadBtn.disabled = true; envOk = false;
+  }
+  if(wasmBlockedByCSP()){
+    showEnvBanner("当前打开页面的安全策略（CSP）禁止 WebAssembly，模型无法运行。" +
+      "请把本文件保存到电脑，用桌面版 Chrome / Edge 直接双击打开；或在该目录执行 python3 -m http.server 8000 后访问 http://localhost:8000/vision-ai-assistant.html 。" +
+      "注意：应用内预览窗口、部分 App 内置浏览器会拦截 WebAssembly。");
+    loadBtn.disabled = true; envOk = false;
+  }
+  if(!envOk) toast("当前环境不支持运行模型，详见页面顶部提示", true);
+
+  syncUI();
+  if(window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>
